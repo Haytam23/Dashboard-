@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Project, Task } from '@/types';
+import { Project, Tasks } from '@/types';
 import { ProjectCard } from './ProjectCard';
 import { calculateProjectProgress } from '@/api/projectService';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,7 +8,7 @@ import { MagnifyingGlassIcon } from '@radix-ui/react-icons';
 
 interface ProjectGridProps {
   projects: Project[];
-  tasks: Task[];
+  tasks: Tasks[];
   selectedProjectId: string | null;
   onSelectProject: (projectId: string) => void;
 }

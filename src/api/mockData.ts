@@ -1,4 +1,4 @@
-import { Project, Task } from '../types';
+import { Project, Tasks } from '../types';
 
 export const mockProjects: Project[] = [
   {
@@ -48,7 +48,7 @@ export const mockProjects: Project[] = [
   }
 ];
 
-export const mockTasks: Task[] = [
+export const mockTasks: Tasks[] = [
   {
     id: '101',
     projectId: '1',

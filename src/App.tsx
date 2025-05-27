@@ -1,6 +1,13 @@
+// src/App.tsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { fetchProjects, fetchAllTasks, updateTaskStatus, calculateProjectProgress } from './api/projectService';
-import { Project, Task } from './types';
+import {
+  fetchProjects,
+  createProject,
+  fetchTasksByProjectId,
+  updateTaskStatus,
+  calculateProjectProgress
+} from './api/projectService';
+import { Project, Tasks } from './types';
 import { ProjectGrid } from './components/ProjectGrid';
 import { TaskTable } from './components/TaskTable';
 import { Navbar } from './components/Navbar';
@@ -13,52 +20,66 @@ import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, LayoutGrid, Table as TableIcon, ScrollText } from 'lucide-react';
 import { Button } from './components/ui/button';
-import { Dialog } from '@/components/ui/dialog';
 import { CreateProjectModal } from '@/components/CreateProjectModal';
 import { v4 as uuidv4 } from 'uuid';
 
 function App() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Tasks[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [loadingTasks, setLoadingTasks] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
 
   const { toast } = useToast();
 
-  // Load initial data
+  // 1️⃣ Fetch projects on mount
   useEffect(() => {
-    async function loadData() {
+    async function loadProjects() {
       try {
-        const [projectsData, tasksData] = await Promise.all([
-          fetchProjects(),
-          fetchAllTasks()
-        ]);
-        setProjects(projectsData);
-        setTasks(tasksData);
-      } catch (error) {
-        console.error('Failed to load data:', error);
+        const pr = await fetchProjects();
+        setProjects(pr);
+      } catch (err) {
+        console.error(err);
         toast({
-          title: 'Error loading data',
-          description: 'There was a problem loading the project data.',
+          title: 'Error loading projects',
+          description: 'Could not fetch projects.',
           variant: 'destructive',
         });
       } finally {
-        setLoading(false);
+        setLoadingProjects(false);
       }
     }
-    loadData();
+    loadProjects();
   }, [toast]);
 
-  // Memoized selected project and its tasks/progress
+  // 2️⃣ Whenever a project is selected, fetch its tasks
+  useEffect(() => {
+    if (!selectedProjectId) return;
+
+    setLoadingTasks(true);
+    async function loadTasks() {
+      try {
+        const t = await fetchTasksByProjectId(selectedProjectId as string);
+        setTasks(t);
+      } catch (err) {
+        console.error(err);
+        toast({
+          title: 'Error loading tasks',
+          description: 'Could not fetch tasks for this project.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoadingTasks(false);
+      }
+    }
+    loadTasks();
+  }, [selectedProjectId, toast]);
+
+  // Memoized selected project and its progress
   const selectedProject = useMemo(
     () => projects.find(p => p.id === selectedProjectId) || null,
     [selectedProjectId, projects]
-  );
-
-  const projectTasks = useMemo(
-    () => tasks.filter(t => t.projectId === selectedProjectId),
-    [selectedProjectId, tasks]
   );
 
   const projectProgress = useMemo(
@@ -66,48 +87,54 @@ function App() {
     [selectedProjectId, tasks]
   );
 
-  // Toggle task status handler
+  // Toggle task status
   const handleToggleStatus = async (taskId: string, newStatus: 'in-progress' | 'completed') => {
     try {
-      const updatedTask = await updateTaskStatus(taskId, newStatus);
-      setTasks(prev => prev.map(t => t.id === taskId ? updatedTask : t));
+      const updated = await updateTaskStatus(taskId, newStatus);
+      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
       toast({
         title: newStatus === 'completed' ? 'Task completed' : 'Task reopened',
-        description: `"${updatedTask.name}" has been ${newStatus === 'completed' ? 'completed' : 'reopened'}.`,
+        description: `"${updated.name}" has been ${newStatus}.`,
       });
     } catch {
       toast({
         title: 'Error updating task',
-        description: 'Could not update task status.',
+        description: 'Could not update status.',
         variant: 'destructive',
       });
     }
   };
 
   // Back to overview
-  const handleBackClick = () => setSelectedProjectId(null);
-
-  // Create project callback
-  const onCreateProject = (data: any) => {
-    const newProject: Project & { tasks: Task[] } = {
-      id: uuidv4(),
-      ...data,
-      tasks: data.tasks.map((task: any) => ({
-        ...task,
-        id: uuidv4(),
-        status: 'pending',
-      })),
-    };
-    setProjects(prev => [newProject, ...prev]);
-    setShowNewProject(false);
-    toast({
-      title: 'Project created',
-      description: `Project "${data.name}" has been added.`,
-    });
+  const handleBackClick = () => {
+    setSelectedProjectId(null);
+    setTasks([]);
   };
 
-  // Render loading skeletons
-  if (loading) {
+  // Create project callback
+  const onCreateProject = async (data: any) => {
+    try {
+      // persist to backend
+      const { id } = await createProject(data);
+      // optimistically add to UI
+      setProjects(prev => [{ id, ...data }, ...prev]);
+      setShowNewProject(false);
+      toast({
+        title: 'Project created',
+        description: `Project "${data.name}" created successfully.`,
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Error creating project',
+        description: 'Could not create project.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Loading state for projects
+  if (loadingProjects) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -140,23 +167,32 @@ function App() {
 
             <ProjectSummary
               project={selectedProject}
-              tasks={projectTasks}
+              tasks={tasks}
               progress={projectProgress}
             />
 
             <Tabs defaultValue="list" className="w-full">
               <TabsList>
-                <TabsTrigger value="list"><TableIcon className="h-4 w-4" /> Task List</TabsTrigger>
-                <TabsTrigger value="details"><ScrollText className="h-4 w-4" /> Project Details</TabsTrigger>
+                <TabsTrigger value="list">
+                  <TableIcon className="h-4 w-4" /> Task List
+                </TabsTrigger>
+                <TabsTrigger value="details">
+                  <ScrollText className="h-4 w-4" /> Project Details
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="list" className="mt-6">
-                <TaskTable
-                  project={selectedProject}
-                  tasks={projectTasks}
-                  onToggleStatus={handleToggleStatus}
-                />
+                {loadingTasks ? (
+                  <Skeleton className="h-48 w-full" />
+                ) : (
+                  <TaskTable
+                    project={selectedProject}
+                    tasks={tasks}
+                    onToggleStatus={handleToggleStatus}
+                  />
+                )}
               </TabsContent>
+
               <TabsContent value="details" className="mt-6">
                 <EmptyState
                   title="Project details"

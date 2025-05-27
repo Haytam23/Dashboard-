@@ -26,7 +26,7 @@ import {
   AlertCircle,
   Zap,
 } from "lucide-react"
-import { Task, Project } from "../types";
+import { Tasks, Project } from "../types";
 
 interface CreateProjectModalProps {
   isOpen: boolean

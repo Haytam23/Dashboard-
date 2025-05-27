@@ -1,6 +1,6 @@
 import React from 'react';
 import { format, formatDistance, parseISO } from 'date-fns';
-import { Project, Task } from '../types';
+import { Project, Tasks } from '../types';
 import { ProgressWithText } from '@/components/ui/progress-with-text';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PriorityBadge } from './PriorityBadge';
@@ -27,7 +27,7 @@ import {
 
 interface ProjectSummaryProps {
   project: Project;
-  tasks: Task[];
+  tasks: Tasks[];
   progress: number;
 }
 
