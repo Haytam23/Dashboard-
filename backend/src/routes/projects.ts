@@ -3,9 +3,13 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import * as pm from '../models/projectModel';
 import * as tm from '../models/taskModel';
-import { Project, Task } from '../types';
+import { Project, Tasks } from '../types';
+import { requireAuth } from '../../middleware/auth';
 
 export const projectRouter = Router();
+
+// protect every /tasks route
+projectRouter.use(requireAuth);
 
 // GET /projects
 projectRouter.get('/', async (_req: Request, res: Response) => {
@@ -69,15 +73,16 @@ projectRouter.post('/', async (req: Request, res: Response) => {
   if (Array.isArray(tasks) && tasks.length) {
     for (const t of tasks) {
       try {
-        const task: Task = {
+        const task: Tasks = {
           id: uuidv4(),
           projectId: id,
           name: t.name,
           description: t.description,
           assignee: t.assignee,
           dueDate: t.dueDate,
-          status: 'pending',
+          status: 'in-progress',
           completedAt: undefined,
+          priority: 'medium', // Default priority, can be changed later
         };
         await tm.createTask(task);
       } catch (taskErr) {
@@ -102,3 +107,14 @@ projectRouter.get('/:id/tasks', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Could not fetch tasks' });
   }
 });
+
+// backend/src/routes/projects.ts
+projectRouter.delete('/:id', async (req, res) => {
+  try {
+    await pm.deleteProject(req.params.id);
+    res.sendStatus(204);
+  } catch {
+    res.status(500).json({ error: 'Failed to delete project' });
+  }
+});
+

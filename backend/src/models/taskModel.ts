@@ -1,7 +1,7 @@
 import { pool } from '../db';
-import { Task } from '../types';
+import { Tasks } from '../types';
 
-export async function getTasksByProject(projectId: string): Promise<Task[]> {
+export async function getTasksByProject(projectId: string): Promise<Tasks[]> {
   const { rows } = await pool.query(`
     SELECT id,
            project_id AS "projectId",
@@ -15,7 +15,7 @@ export async function getTasksByProject(projectId: string): Promise<Task[]> {
   return rows;
 }
 
-export async function createTask(t: Task): Promise<void> {
+export async function createTask(t: Tasks): Promise<void> {
   await pool.query(
     `INSERT INTO tasks(
        id, project_id, name, description, assignee, due_date, status, completed_at
@@ -33,7 +33,7 @@ export async function createTask(t: Task): Promise<void> {
   );
 }
 
-export async function updateTaskStatus(id: string, status: Task['status']): Promise<Task> {
+export async function updateTaskStatus(id: string, status: Tasks['status']): Promise<Tasks> {
   const completedAt = status === 'completed' ? new Date() : null;
   const { rows } = await pool.query(`
     UPDATE tasks
@@ -44,3 +44,8 @@ export async function updateTaskStatus(id: string, status: Task['status']): Prom
   `, [id, status, completedAt]);
   return rows[0];
 }
+
+export async function deleteTask(id: string): Promise<void> {
+  await pool.query('DELETE FROM tasks WHERE id = $1', [id]);
+}
+

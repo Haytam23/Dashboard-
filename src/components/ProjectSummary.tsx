@@ -25,13 +25,16 @@ import {
   Tooltip as ReTooltip
 } from 'recharts';
 
+
 interface ProjectSummaryProps {
   project: Project;
   tasks: Tasks[];
   progress: number;
+  onDelete?: (projectId: string) => void;
+  
 }
 
-export function ProjectSummary({ project, tasks, progress }: ProjectSummaryProps) {
+export function ProjectSummary({ project, tasks, progress ,onDelete}: ProjectSummaryProps) {
   const startDate = parseISO(project.startDate);
   const endDate = parseISO(project.endDate);
 
@@ -87,7 +90,10 @@ export function ProjectSummary({ project, tasks, progress }: ProjectSummaryProps
             <CardTitle className="text-xl bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--neon-blue))] to-[hsl(var(--neon-purple))]">
               {project.name}
             </CardTitle>
-            <PriorityBadge priority={project.priority} />
+            <div className="flex items-center gap-4">
+              <PriorityBadge priority={project.priority} />
+             
+            </div>
           </div>
         </CardHeader>
         <CardContent>

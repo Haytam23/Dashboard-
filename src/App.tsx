@@ -5,7 +5,9 @@ import {
   createProject,
   fetchTasksByProjectId,
   updateTaskStatus,
-  calculateProjectProgress
+  calculateProjectProgress,
+  deleteTask,
+  deleteProject,
 } from './api/projectService';
 import { Project, Tasks } from './types';
 import { ProjectGrid } from './components/ProjectGrid';
@@ -154,6 +156,37 @@ function App() {
     );
   }
 
+async function handleDeleteTask(taskId: string) {
+  try {
+    await deleteTask(taskId);
+    // re-fetch tasks
+    const fresh = await fetchTasksByProjectId(selectedProjectId!);
+    setTasks(fresh);
+  } catch (err) {
+    console.error(err);
+    toast({ title: 'Failed to delete task', variant: 'destructive' });
+  }
+}
+
+async function handleDeleteProject(projectId: string) {
+    try {
+      await deleteProject(projectId);
+      // remove from local state
+      setProjects(prev => prev.filter(p => p.id !== projectId));
+      // also remove any tasks from that project
+      setTasks(prev => prev.filter(t => t.projectId !== projectId));
+      toast({ title: 'Project deleted' });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Failed to delete project',
+        description: (err as Error).message,
+        variant: 'destructive',
+      });
+    }
+}
+ 
+  
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -169,6 +202,7 @@ function App() {
               project={selectedProject}
               tasks={tasks}
               progress={projectProgress}
+              onDelete={handleDeleteProject}
             />
 
             <Tabs defaultValue="list" className="w-full">
@@ -189,6 +223,7 @@ function App() {
                     project={selectedProject}
                     tasks={tasks}
                     onToggleStatus={handleToggleStatus}
+                    onDelete={handleDeleteTask}
                   />
                 )}
               </TabsContent>
@@ -228,6 +263,7 @@ function App() {
                 tasks={tasks}
                 selectedProjectId={selectedProjectId}
                 onSelectProject={setSelectedProjectId}
+                onDeleteProject={handleDeleteProject}
               />
             )}
           </>
@@ -238,9 +274,9 @@ function App() {
       <CreateProjectModal
         isOpen={showNewProject}
         onClose={() => setShowNewProject(false)}
-        onCreate={onCreateProject}
+        onCreate={onCreateProject}    
       />
-
+      
       <Toaster />
     </div>
   );

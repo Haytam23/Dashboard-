@@ -8,13 +8,24 @@ export interface Project {
   priority: 'low'|'medium'|'high';
 }
 
-export interface Task {
+export interface Tasks {
   id: string;
   projectId: string;
   name: string;
   description?: string;
   assignee?: string;
   dueDate: string;
-  status: 'pending'|'in-progress'|'completed';
+  status: 'in-progress'|'completed';
   completedAt?: string;
+  priority: 'low'|'medium'|'high';
+
+}
+
+
+export interface User {
+  id: string;
+  email: string;
+  password: string;
+  reset_token?: string | null;
+  reset_expires?: Date | null;
 }

@@ -20,3 +20,7 @@ export async function createProject(p: Project): Promise<void> {
     [p.id,p.name,p.description,p.startDate,p.endDate,p.category,p.priority]
   );
 }
+
+export async function deleteProject(id: string): Promise<void> {
+  await pool.query('DELETE FROM projects WHERE id = $1', [id]);
+}

@@ -18,7 +18,8 @@ import {
   SearchIcon,
   SlidersHorizontal,
   UserIcon,
-  XCircle
+  XCircle,
+  Trash2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
@@ -36,19 +37,25 @@ interface TaskTableProps {
   project: Project;
   tasks: Tasks[];
   onToggleStatus: (taskId: string, newStatus: 'in-progress' | 'completed') => void;
+  onDelete?: (taskId: string) => void;
 }
 
-export function TaskTable({ project, tasks, onToggleStatus }: TaskTableProps) {
+export function TaskTable({
+  project,
+  tasks,
+  onToggleStatus,
+  onDelete
+}: TaskTableProps) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<Set<string>>(
-  new Set(['pending', 'in-progress', 'completed'])
+    new Set(['pending', 'in-progress', 'completed'])
   );
-  // Filter + sort
+
   const filteredTasks = useMemo(() => {
     return tasks
       .filter(task =>
         (task.name.toLowerCase().includes(search.toLowerCase()) ||
-         (task.assignee || '').toLowerCase().includes(search.toLowerCase())) &&
+          (task.assignee || '').toLowerCase().includes(search.toLowerCase())) &&
         statusFilter.has(task.status)
       )
       .sort((a, b) => {
@@ -59,16 +66,16 @@ export function TaskTable({ project, tasks, onToggleStatus }: TaskTableProps) {
       });
   }, [tasks, search, statusFilter]);
 
-  const formatDate = (dateStr: string) => format(parseISO(dateStr), 'MMM d, yyyy');
-  const isDatePast = (dateStr: string) =>
-    isPast(parseISO(dateStr)) &&
-    new Date().toDateString() !== parseISO(dateStr).toDateString();
+  const formatDate = (d: string) => format(parseISO(d), 'MMM d, yyyy');
+  const isDatePast = (d: string) =>
+    isPast(parseISO(d)) &&
+    new Date().toDateString() !== parseISO(d).toDateString();
 
-  const toggleStatusFilter = (status: string) => {
-    const newSet = new Set(statusFilter);
-    if (newSet.has(status)) newSet.delete(status);
-    else newSet.add(status);
-    setStatusFilter(newSet);
+  const toggleStatusFilter = (s: string) => {
+    const copy = new Set(statusFilter);
+    if (copy.has(s)) copy.delete(s);
+    else copy.add(s);
+    setStatusFilter(copy);
   };
 
   return (
@@ -136,6 +143,7 @@ export function TaskTable({ project, tasks, onToggleStatus }: TaskTableProps) {
                 <TableHead>Task</TableHead>
                 <TableHead className="hidden sm:table-cell">Assignee</TableHead>
                 <TableHead className="hidden md:table-cell">Due Date</TableHead>
+                <TableHead className="text-center">Delete</TableHead>
                 <TableHead className="text-right">Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -163,10 +171,25 @@ export function TaskTable({ project, tasks, onToggleStatus }: TaskTableProps) {
                     <TableCell className={`hidden md:table-cell ${past ? 'text-red-600' : ''}`}>
                       <div className="flex items-center gap-1.5">
                         <CalendarIcon
-                          className={`h-3.5 w-3.5 ${past ? 'text-red-600' : 'text-muted-foreground'}`}
+                          className={`h-3.5 w-3.5 ${
+                            past ? 'text-red-600' : 'text-muted-foreground'
+                          }`}
                         />
                         <span>{formatDate(task.dueDate)}</span>
                       </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {onDelete ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onDelete(task.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      ) : (
+                        '—'
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <BadgeStatus

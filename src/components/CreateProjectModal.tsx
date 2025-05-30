@@ -158,7 +158,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                       <Input
                         id="name"
                         placeholder="Enter project name"
-                        className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                        className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white text-black dark:bg-slate-800"
                         {...register("name", { required: "Project name is required" })}
                       />
                       {errors.name && (
@@ -180,7 +180,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                       <Input
                         id="category"
                         placeholder="e.g., Web Development, Marketing"
-                        className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                        className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white text-black dark:bg-slate-800"
                         {...register("category", { required: "Category is required" })}
                       />
                       {errors.category && (
@@ -205,7 +205,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                       <Input
                         id="startDate"
                         type="date"
-                        className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                        className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white text-black dark:bg-slate-800"
                         {...register("startDate", { required: "Start date is required" })}
                       />
                       {errors.startDate && (
@@ -227,7 +227,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                       <Input
                         id="endDate"
                         type="date"
-                        className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                        className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white text-black dark:bg-slate-800"
                         {...register("endDate", { required: "End date is required" })}
                       />
                       {errors.endDate && (
@@ -246,7 +246,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                       Priority
                     </Label>
                     <Select value={watchedPriority} onValueChange={(value) => setValue("priority", value)}>
-                      <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800">
+                      <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white text-black dark:bg-slate-800">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -277,7 +277,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                     <Textarea
                       id="description"
                       rows={4}
-                      className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 resize-none bg-white dark:bg-slate-800"
+                      className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 resize-none bg-white text-black dark:bg-slate-800"
                       placeholder="Describe your project goals and objectives..."
                       {...register("description")}
                     />
@@ -379,7 +379,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                                 <Input
                                   id={`tasks.${index}.title`}
                                   placeholder="Task title"
-                                  className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                                  className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white text-black dark:bg-slate-800"
                                   {...register(`tasks.${index}.title`, { required: "Title is required" })}
                                 />
                                 {errors.tasks?.[index]?.title && (
@@ -402,7 +402,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                                   <Input
                                     id={`tasks.${index}.assignee`}
                                     placeholder="Assign to..."
-                                    className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                                    className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white text-black dark:bg-slate-800"
                                     {...register(`tasks.${index}.assignee`)}
                                   />
                                 </div>
@@ -418,7 +418,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                                   <Input
                                     id={`tasks.${index}.dueDate`}
                                     type="date"
-                                    className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800"
+                                    className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white text-black dark:bg-slate-800"
                                     {...register(`tasks.${index}.dueDate`)}
                                   />
                                 </div>
@@ -433,7 +433,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                                   value={watch(`tasks.${index}.priority`)}
                                   onValueChange={(value) => setValue(`tasks.${index}.priority`, value)}
                                 >
-                                  <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-slate-800">
+                                  <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white text-black dark:bg-slate-800">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -462,7 +462,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                                 <Textarea
                                   id={`tasks.${index}.description`}
                                   rows={2}
-                                  className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 resize-none bg-white dark:bg-slate-800"
+                                  className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 resize-none bg-white text-black dark:bg-slate-800"
                                   placeholder="Task description..."
                                   {...register(`tasks.${index}.description`)}
                                 />
