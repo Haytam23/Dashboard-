@@ -51,6 +51,7 @@ const allowedOrigins = [
   'http://localhost:5173', // Your Vite dev URL
   // !! ADD YOUR DEPLOYED FRONTEND URL HERE !!
   // Example: 'https://your-frontend-project.vercel.app',
+  'https://project-management.vercel.app', // Example production URL
   // You can also add other staging/production frontend URLs if you have them.
   // For now, leave as a comment and add when you have the URL.
 ];
