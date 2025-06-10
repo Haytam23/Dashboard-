@@ -1,4 +1,3 @@
-import React from 'react';
 import { format, formatDistance, parseISO } from 'date-fns';
 import { Project, Tasks } from '../types';
 import { ProgressWithText } from '@/components/ui/progress-with-text';
@@ -34,7 +33,7 @@ interface ProjectSummaryProps {
   
 }
 
-export function ProjectSummary({ project, tasks, progress ,onDelete}: ProjectSummaryProps) {
+export function ProjectSummary({ project, tasks, progress }: ProjectSummaryProps) {
   const startDate = parseISO(project.startDate);
   const endDate = parseISO(project.endDate);
 
@@ -47,11 +46,6 @@ export function ProjectSummary({ project, tasks, progress ,onDelete}: ProjectSum
     acc[task.assignee] = (acc[task.assignee] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
-
-  const assigneeData = Object.entries(assigneeStats).map(([name, count]) => ({
-    name,
-    tasks: count,
-  }));
 
   // Task status data for pie chart
   const statusData = [
@@ -200,7 +194,7 @@ export function ProjectSummary({ project, tasks, progress ,onDelete}: ProjectSum
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {statusData.map((entry, index) => (
+                  {statusData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
