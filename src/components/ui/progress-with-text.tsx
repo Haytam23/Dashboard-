@@ -19,11 +19,14 @@ export function ProgressWithText({
 }: ProgressWithTextProps) {
   return (
     <div className="relative w-full">
-      <Progress 
-        value={value} 
-        className={className}
-        indicatorColor={indicatorColor}
-      />
+      <div
+        className={cn("relative h-4 w-full overflow-hidden rounded-full bg-secondary", className)}
+      >
+        <div
+          className={cn("h-full w-full flex-1 transition-all", indicatorColor || "bg-primary")}
+          style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+        />
+      </div>
       {showText && (
         <span 
           className={cn(
@@ -37,23 +40,3 @@ export function ProgressWithText({
     </div>
   );
 }
-
-// Override the default Progress component to accept indicatorColor
-Progress.defaultProps = {
-  ...Progress.defaultProps,
-  render: (props: any) => {
-    const { className, value, indicatorColor, ...rest } = props;
-    
-    return (
-      <div
-        className={cn("relative h-4 w-full overflow-hidden rounded-full bg-secondary", className)}
-        {...rest}
-      >
-        <div
-          className={cn("h-full w-full flex-1 transition-all", indicatorColor || "bg-primary")}
-          style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
-        />
-      </div>
-    );
-  }
-};
