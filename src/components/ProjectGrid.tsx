@@ -1,5 +1,5 @@
 // src/components/ProjectGrid.tsx
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Project, Tasks }       from '@/types'
 import { ProjectCard }          from './ProjectCard'
 import { calculateProjectProgress } from '@/api/projectService'
@@ -35,7 +35,7 @@ export function ProjectGrid({
   const [searchQuery,    setSearchQuery]    = useState('')
   const [categoryFilter, setCategoryFilter] = useState<'all' | string>('all')
   const [priorityFilter, setPriorityFilter] = useState<'all'|'low'|'medium'|'high'>('all')
-  const [statusFilter,   setStatusFilter]   = useState<Status>('all')
+  const [statusFilter] = useState<Status>('all')
 
   // Precompute progress and status for each project
   const meta = useMemo(() => {
@@ -147,6 +147,7 @@ export function ProjectGrid({
           })}
         </div>
       )}
+      
     </div>
   )
 }

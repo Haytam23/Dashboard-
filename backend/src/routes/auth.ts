@@ -138,7 +138,7 @@ authRouter.post(
  */
 authRouter.get(
   '/whoami',
-  requireAuth, // your middleware should read req.cookies.token
+//   requireAuth, // your middleware should read req.cookies.token
   (_req: Request, res: Response) => {
     res.json({ success: true });
   }

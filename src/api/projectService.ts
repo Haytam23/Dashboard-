@@ -125,12 +125,12 @@
 // src/api/projectService.ts
 const API_BASE = 'http://localhost:4000';
 
-function getAuthHeaders() {
-  const token = localStorage.getItem('token');       // or import a helper from your AuthContext
-  return token
-    ? { Authorization: `Bearer ${token}` }
-    : {};
-}
+// function getAuthHeaders() {
+//   const token = localStorage.getItem('token');       // or import a helper from your AuthContext
+//   return token
+//     ? { Authorization: `Bearer ${token}` }
+//     : {};
+// }
 import type { Project, Tasks } from '../types';
 
 const BASE = import.meta.env.VITE_API_URL!;

@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   fetchProjects,
   createProject,
@@ -23,7 +23,6 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, LayoutGrid, Table as TableIcon, ScrollText } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { CreateProjectModal } from '@/components/CreateProjectModal';
-import { v4 as uuidv4 } from 'uuid';
 
 function App() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -188,98 +187,106 @@ async function handleDeleteProject(projectId: string) {
  
   
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="container mx-auto py-8 px-4">
-        {selectedProject ? (
-          <div className="space-y-6 animate-in fade-in-50 duration-300">
-            <Button variant="ghost" size="sm" onClick={handleBackClick} className="gap-1">
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Projects</span>
-            </Button>
+  <div className="min-h-screen flex flex-col bg-black-100 text-white">
+    <Navbar />
 
-            <ProjectSummary
-              project={selectedProject}
-              tasks={tasks}
-              progress={projectProgress}
-              onDelete={handleDeleteProject}
-            />
+    <main className="container mx-auto py-8 px-4">
+      {selectedProject ? (
+        <div className="space-y-6 animate-in fade-in-50 duration-300">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBackClick}
+            className="gap-1 text-blue-400 hover:text-blue-300"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Projects</span>
+          </Button>
 
-            <Tabs defaultValue="list" className="w-full">
-              <TabsList>
-                <TabsTrigger value="list">
-                  <TableIcon className="h-4 w-4" /> Task List
-                </TabsTrigger>
-                <TabsTrigger value="details">
-                  <ScrollText className="h-4 w-4" /> Project Details
-                </TabsTrigger>
-              </TabsList>
+          <ProjectSummary
+            project={selectedProject}
+            tasks={tasks}
+            progress={projectProgress}
+            onDelete={handleDeleteProject}
+          />
 
-              <TabsContent value="list" className="mt-6">
-                {loadingTasks ? (
-                  <Skeleton className="h-48 w-full" />
-                ) : (
-                  <TaskTable
-                    project={selectedProject}
-                    tasks={tasks}
-                    onToggleStatus={handleToggleStatus}
-                    onDelete={handleDeleteTask}
-                  />
-                )}
-              </TabsContent>
+          <Tabs defaultValue="list" className="w-full">
+            <TabsList className="bg-slate-700/50 rounded-full">
+              <TabsTrigger value="list" className="text-white">
+                <TableIcon className="h-4 w-4" /> Task List
+              </TabsTrigger>
+              <TabsTrigger value="details" className="text-white">
+                <ScrollText className="h-4 w-4" /> Project Details
+              </TabsTrigger>
+            </TabsList>
 
-              <TabsContent value="details" className="mt-6">
-                <EmptyState
-                  title="Project details"
-                  description="Analytics coming soon."
+            <TabsContent value="list" className="mt-6">
+              {loadingTasks ? (
+                <Skeleton className="h-48 w-full bg-slate-700" />
+              ) : (
+                <TaskTable
+                  project={selectedProject}
+                  tasks={tasks}
+                  onToggleStatus={handleToggleStatus}
+                  onDelete={handleDeleteTask}
                 />
-              </TabsContent>
-            </Tabs>
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold">Projects Overview</h1>
-              <Button onClick={() => setShowNewProject(true)} className="gap-2">
-                <LayoutGrid className="h-4 w-4" />
-                <span>New Project</span>
-              </Button>
-            </div>
+              )}
+            </TabsContent>
 
-            <Separator className="my-6" />
-
-            {projects.length === 0 ? (
+            <TabsContent value="details" className="mt-6">
               <EmptyState
-                title="No projects found"
-                description="Get started by creating your first project."
-                action={{
-                  label: 'Create Project',
-                  onClick: () => setShowNewProject(true),
-                }}
+                title="Project details"
+                description="Analytics coming soon."
               />
-            ) : (
-              <ProjectGrid
-                projects={projects}
-                tasks={tasks}
-                selectedProjectId={selectedProjectId}
-                onSelectProject={setSelectedProjectId}
-                onDeleteProject={handleDeleteProject}
-              />
-            )}
-          </>
-        )}
-      </main>
+            </TabsContent>
+          </Tabs>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-white">Projects Overview</h1>
+            <Button
+              onClick={() => setShowNewProject(true)}
+              className="gap-2 bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              <LayoutGrid className="h-4 w-4" />
+              <span>New Project</span>
+            </Button>
+          </div>
 
-      {/* Create Project Modal */}
-      <CreateProjectModal
-        isOpen={showNewProject}
-        onClose={() => setShowNewProject(false)}
-        onCreate={onCreateProject}    
-      />
-      
-      <Toaster />
-    </div>
-  );
+          <Separator className="my-6 border-slate-700" />
+
+          {projects.length === 0 ? (
+            <EmptyState
+              title="No projects found"
+              description="Get started by creating your first project."
+              action={{
+                label: 'Create Project',
+                onClick: () => setShowNewProject(true),
+              }}
+            />
+          ) : (
+            <ProjectGrid
+              projects={projects}
+              tasks={tasks}
+              selectedProjectId={selectedProjectId}
+              onSelectProject={setSelectedProjectId}
+              onDeleteProject={handleDeleteProject}
+            />
+          )}
+        </>
+      )}
+    </main>
+
+    {/* Create Project Modal */}
+    <CreateProjectModal
+      isOpen={showNewProject}
+      onClose={() => setShowNewProject(false)}
+      onCreate={onCreateProject}
+    />
+
+    <Toaster />
+  </div>
+);
 }
-
 export default App;

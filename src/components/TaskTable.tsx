@@ -1,5 +1,5 @@
 // src/components/TaskTable.tsx
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Table,
   TableBody,

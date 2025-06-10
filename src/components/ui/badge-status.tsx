@@ -1,5 +1,4 @@
-import React from "react";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "./badge";
 import { cn } from "@/lib/utils";
 
 interface BadgeStatusProps {
