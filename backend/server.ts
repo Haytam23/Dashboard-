@@ -174,9 +174,6 @@
 
 
 
-
-
-
 // backend/server.ts
 import express from 'express';
 import cors from 'cors';
@@ -186,31 +183,26 @@ import cookieParser from 'cookie-parser';
 import { projectRouter } from './src/routes/projects';
 import { taskRouter } from './src/routes/tasks';
 import { authRouter } from './src/routes/auth';
-
-// CORRECTED PATH: From '../middleware/auth' to './middleware/auth'
-// because server.ts and middleware folder are siblings in 'backend/'
 import { requireAuth } from './middleware/auth'; 
 
-// !! IMPORT YOUR DATABASE POOL HERE !!
-import { pool } from './src/db'; // Adjust path if your db.ts is in src, e.g., './src/db'
+import { pool } from './src/db'; 
 
-dotenv.config(); // Loads environment variables from .env file
+dotenv.config();
 const app = express();
 
 const allowedOrigins = [
-  'http://localhost:5173', // Your Vite dev URL
-  'https://dashboard-lfg-front.vercel.app' // Your generic deployed frontend URL
+  'http://localhost:5173', // Your local Vite dev URL
+  // **CRUCIAL: PASTE THE EXACT ORIGIN YOU COPIED FROM YOUR BROWSER HERE.**
+  'https://dashboard-lfg-front.vercel.app' // This should be the exact value from window.location.origin
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
     // Log the incoming origin for debugging in Vercel logs
-    console.log(`CORS check: Request Origin: ${origin}`);
+    console.log(`CORS check: Request Origin: ${origin}`); // THIS LOG IS KEY!
 
-    // Allow requests with no origin (e.g., from Postman, curl, or same-origin requests)
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, true); // Allow requests with no origin
 
-    // Check if the requesting origin is in our allowed list
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = `CORS Error: Origin '${origin}' is not allowed by the backend's CORS policy. Allowed: ${allowedOrigins.join(', ')}.`;
       console.error(msg);
@@ -218,39 +210,30 @@ app.use(cors({
     }
     return callback(null, true);
   },
-  // Ensure all necessary methods are allowed, especially 'OPTIONS' for preflight
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  credentials: true, // Allow cookies to be sent (essential for authentication)
-  exposedHeaders: ['Set-Cookie'] // If your backend sets cookies, expose this header
+  credentials: true,
+  exposedHeaders: ['Set-Cookie']
 }));
 
-app.use(cookieParser()); // Middleware to parse cookies
-app.use(express.json()); // Middleware to parse JSON request bodies
+app.use(cookieParser());
+app.use(express.json());
 
-// Public auth endpoints
-// No requireAuth middleware here, as login/signup should be public
 console.log('Mounting /auth router...');
 app.use('/auth', authRouter);
 
-// Protected resource endpoints
-// requireAuth middleware is applied only to these routers
 console.log('Mounting protected /projects and /tasks routers with requireAuth...');
 app.use('/projects', requireAuth, projectRouter);
 app.use('/tasks', requireAuth, taskRouter);
-
 
 app.get('/', (req, res) => {
   res.send('Project Management Backend API is running!');
 });
 
-
 const port = process.env.PORT || 4000;
 
-// Function to start the server after database check
 async function startServer() {
   try {
     console.log('Attempting to connect to PostgreSQL database...');
-    // A simple query to test the connection. This will throw an error if connection fails.
     await pool.query('SELECT 1;'); 
     console.log('PostgreSQL database connected successfully!');
 
@@ -259,9 +242,8 @@ async function startServer() {
     });
   } catch (error) {
     console.error('FATAL ERROR: Failed to start server due to database connection issue:', error);
-    console.error('Please ensure your DATABASE_URL environment variable is correct in Vercel and Supabase is accessible.');
-    process.exit(1); // Exit process if database connection cannot be established
+    process.exit(1); 
   }
 }
 
-startServer(); // Call the async function to start the server
+startServer();
