@@ -3,7 +3,7 @@
 import type React from "react"
 import { useForm, useFieldArray } from "react-hook-form"
 import { v4 as uuidv4 } from "uuid"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -26,7 +26,6 @@ import {
   AlertCircle,
   Zap,
 } from "lucide-react"
-import { Tasks, Project } from "../types";
 
 interface CreateProjectModalProps {
   isOpen: boolean
@@ -78,7 +77,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
 
   const { fields, append, remove } = useFieldArray({ control, name: "tasks" })
   const watchedPriority = watch("priority")
-  const watchedTasks = watch("tasks")
+  // const watchedTasks = watch("tasks")
 
   const onSubmit = (data: any) => {
     const newProject = {

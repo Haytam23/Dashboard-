@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { formatDistanceToNow, format, isAfter, isBefore, parseISO } from 'date-fns';
-import { Project } from '../../backend/src/types';
+import { Project } from '../../../backend/src/types';
 import { Calendar } from 'lucide-react';
 
 interface ProjectCardProps {
