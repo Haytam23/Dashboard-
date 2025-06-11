@@ -93,7 +93,7 @@ import { requireAuth } from './middleware/auth';
 import { pool } from './src/db'; 
 
 dotenv.config(); // Loads environment variables from .env file
-const app = express();
+const app = express(); // Initialize Express app
 
 const allowedOrigins = [
   'http://localhost:5173', // Your local Vite dev URL
@@ -138,28 +138,27 @@ app.use('/projects', requireAuth, projectRouter);
 app.use('/tasks', requireAuth, taskRouter);
 
 // Default route for health check or basic message
+// This is the route that should respond to GET /
 app.get('/', (req, res) => {
   res.send('Project Management Backend API is running!');
 });
 
-// IMPORTANT: FOR VERCEL SERVERLESS FUNCTIONS
-// Do NOT use app.listen() here. Vercel handles the server listening.
-// Instead, we export the 'app' instance directly.
+// IMPORTANT FOR VERCEL:
+// 1. Remove the app.listen() call. Vercel automatically handles listening.
+// 2. Export the Express app instance so Vercel can find and execute it.
 
-// Initialize function to handle asynchronous tasks like database connection
-// This runs once when the serverless function is initialized (cold start).
+// Initialize function to handle asynchronous tasks like database connection.
+// This runs once when the serverless function is initialized (on cold start).
 async function init() {
   try {
     console.log('Attempting to connect to PostgreSQL database...');
-    // A simple query to test the connection. If this fails, the serverless function
-    // will still be "live", but subsequent DB operations will fail.
+    // A simple query to test the connection.
     await pool.query('SELECT 1;'); 
     console.log('PostgreSQL database connected successfully!');
   } catch (error) {
     console.error('FATAL ERROR: Failed to establish database connection during initialization:', error);
-    // In a serverless environment, throwing here won't stop the 'function'
-    // from being ready to receive requests, but it signals a critical issue.
-    // Requests relying on DB will fail.
+    // In a serverless environment, throwing here won't necessarily stop the 'function'
+    // from being deployed, but it signals a critical issue. Requests relying on the DB will fail.
   }
 }
 
@@ -167,4 +166,5 @@ async function init() {
 init();
 
 // Export the Express app instance for Vercel
+// This is crucial for Vercel to recognize and run your Express application.
 export default app;
