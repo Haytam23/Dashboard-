@@ -99,9 +99,8 @@ const allowedOrigins = [
   'http://localhost:5173', // Your local Vite dev URL
   // CRUCIAL: This must be the EXACT URL of your deployed frontend.
   // Copy it from your browser's console using `window.location.origin` if unsure.
-  'https://dashboard-lafarge-frontend.vercel.app'
-];
-
+  'https://dashboard-lafarge-frontend.vercel.app' // This should be the exact value from window.location.origin
+]
 // CORS Middleware - MUST BE APPLIED FIRST
 app.use(cors({
   origin: function (origin, callback) {
