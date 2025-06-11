@@ -50,10 +50,9 @@
 
 
 
-
 // backend/middleware/auth.ts
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken'; // Assuming you use JWT for authentication
+import jwt from 'jsonwebtoken';
 
 export function requireAuth(
   req: Request,
@@ -62,29 +61,26 @@ export function requireAuth(
 ): void {
   // Allow OPTIONS requests to pass through without authentication
   if (req.method === 'OPTIONS') {
-    // IMPORTANT LOG: This will tell us if the OPTIONS bypass is being hit
     console.log('requireAuth: OPTIONS request detected, bypassing authentication.');
-    return next();
+    return next(); // Crucial for preflight requests
   }
 
   const auth = req.headers.authorization?.split(' ')[1];
 
-  // If no authorization header is present
   if (!auth) {
     console.warn('requireAuth: No authorization token found, sending 401.');
-    res.sendStatus(401); // Send 401 Unauthorized status
-    return; // Stop processing this request
+    res.sendStatus(401);
+    return;
   }
 
   try {
     const decoded = jwt.verify(auth, process.env.JWT_SECRET as string);
     (req as any).user = decoded;
     console.log('requireAuth: Token successfully verified for user:', (decoded as any).id);
-    next(); // Pass control to the next middleware or route handler
+    next();
   } catch (error) {
-    // Log the error for debugging purposes (e.g., token expired, invalid signature)
     console.error('requireAuth: Authentication failed during token verification:', error);
-    res.sendStatus(401); // Send 401 Unauthorized status for invalid tokens
-    return; // Stop processing this request
+    res.sendStatus(401);
+    return;
   }
 }

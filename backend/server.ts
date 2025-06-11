@@ -183,16 +183,16 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 
-import { projectRouter } from './routes/projects';
-import { taskRouter } from './routes/tasks';
-import { authRouter } from './routes/auth';
+import { projectRouter } from './src/routes/projects';
+import { taskRouter } from './src/routes/tasks';
+import { authRouter } from './src/routes/auth';
 
 // CORRECTED PATH: From '../middleware/auth' to './middleware/auth'
 // because server.ts and middleware folder are siblings in 'backend/'
 import { requireAuth } from './middleware/auth'; 
 
 // !! IMPORT YOUR DATABASE POOL HERE !!
-import { pool } from './db'; // Adjust path if your db.ts is in src, e.g., './src/db'
+import { pool } from './src/db'; // Adjust path if your db.ts is in src, e.g., './src/db'
 
 dotenv.config(); // Loads environment variables from .env file
 const app = express();

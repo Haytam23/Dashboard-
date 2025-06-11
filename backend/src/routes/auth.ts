@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import * as um from '../models/userModel';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth } from '../../middleware/auth';
 import type { User } from '../types';
 
 export const authRouter = Router();
