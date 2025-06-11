@@ -186,14 +186,12 @@ import cookieParser from 'cookie-parser';
 import { projectRouter } from './routes/projects';
 import { taskRouter } from './routes/tasks';
 import { authRouter } from './routes/auth';
-// Make sure this import path is correct relative to server.ts
-// If server.ts is in `backend/src` and middleware is in `backend/middleware`,
-// then `../middleware/auth` is correct. If both are direct children of `backend`,
-// it would be `./middleware/auth`. Check your exact file structure.
+
+// CORRECTED PATH: From '../middleware/auth' to './middleware/auth'
+// because server.ts and middleware folder are siblings in 'backend/'
 import { requireAuth } from '../middleware/auth'; 
 
 // !! IMPORT YOUR DATABASE POOL HERE !!
-// Assuming db.ts is at `backend/db.ts` or `backend/src/db.ts`
 import { pool } from './db'; // Adjust path if your db.ts is in src, e.g., './src/db'
 
 dotenv.config(); // Loads environment variables from .env file
@@ -202,7 +200,7 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173', // Your Vite dev URL
   'https://project-management.vercel.app', // Your generic deployed frontend URL
-  'https://project-management-omega-nine.vercel.app' // YOUR ACTUAL DEPLOYED FRONTEND URL FROM PREVIOUS LOGS
+  'https://project-management-omega-nine.vercel.app' // YOUR ACTUAL DEPLOYED FRONTEND URL
 ];
 
 app.use(cors({

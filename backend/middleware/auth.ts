@@ -51,9 +51,6 @@
 
 
 
-
-
-
 // backend/middleware/auth.ts
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken'; // Assuming you use JWT for authentication
@@ -80,11 +77,7 @@ export function requireAuth(
   }
 
   try {
-    // You need to actually verify the JWT token here.
-    // Ensure process.env.JWT_SECRET is correctly set in Vercel environment variables.
     const decoded = jwt.verify(auth, process.env.JWT_SECRET as string);
-
-    // Attach the decoded user payload to the request object for later use
     (req as any).user = decoded;
     console.log('requireAuth: Token successfully verified for user:', (decoded as any).id);
     next(); // Pass control to the next middleware or route handler
