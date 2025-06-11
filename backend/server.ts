@@ -199,28 +199,28 @@ const app = express();
 
 const allowedOrigins = [
   'http://localhost:5173', // Your Vite dev URL
-  'https://project-management.vercel.app', // Your generic deployed frontend URL
-  'https://project-management-omega-nine.vercel.app' // YOUR ACTUAL DEPLOYED FRONTEND URL
+  'https://dashboard-lfg-front.vercel.app' // Your generic deployed frontend URL
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Log the origin being checked by CORS
-    console.log('CORS: Checking origin:', origin);
+    // Log the incoming origin for debugging in Vercel logs
+    console.log(`CORS check: Request Origin: ${origin}`);
 
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (e.g., from Postman, curl, or same-origin requests)
     if (!origin) return callback(null, true);
 
+    // Check if the requesting origin is in our allowed list
     if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `CORS Error: The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-      console.error(msg); // Log the specific CORS error
+      const msg = `CORS Error: Origin '${origin}' is not allowed by the backend's CORS policy. Allowed: ${allowedOrigins.join(', ')}.`;
+      console.error(msg);
       return callback(new Error(msg), false);
     }
     return callback(null, true);
   },
-  // Explicitly allow OPTIONS method in CORS headers
+  // Ensure all necessary methods are allowed, especially 'OPTIONS' for preflight
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  credentials: true, // Allow cookies to be sent
+  credentials: true, // Allow cookies to be sent (essential for authentication)
   exposedHeaders: ['Set-Cookie'] // If your backend sets cookies, expose this header
 }));
 
@@ -237,6 +237,12 @@ app.use('/auth', authRouter);
 console.log('Mounting protected /projects and /tasks routers with requireAuth...');
 app.use('/projects', requireAuth, projectRouter);
 app.use('/tasks', requireAuth, taskRouter);
+
+
+app.get('/', (req, res) => {
+  res.send('Project Management Backend API is running!');
+});
+
 
 const port = process.env.PORT || 4000;
 
