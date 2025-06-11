@@ -189,7 +189,7 @@ import { authRouter } from './routes/auth';
 
 // CORRECTED PATH: From '../middleware/auth' to './middleware/auth'
 // because server.ts and middleware folder are siblings in 'backend/'
-import { requireAuth } from '../middleware/auth'; 
+import { requireAuth } from './middleware/auth'; 
 
 // !! IMPORT YOUR DATABASE POOL HERE !!
 import { pool } from './db'; // Adjust path if your db.ts is in src, e.g., './src/db'

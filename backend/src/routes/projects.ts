@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as pm from '../models/projectModel';
 import * as tm from '../models/taskModel';
 import { Project, Tasks } from '../types';
-import { requireAuth } from '../../middleware/auth';
+import { requireAuth } from '../middleware/auth';
 
 export const projectRouter = Router();
 

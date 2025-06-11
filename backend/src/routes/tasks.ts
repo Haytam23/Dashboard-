@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as tm from '../models/taskModel';
 import type { Tasks } from '../types'; // <-- Use Task, not Tasks
-import { requireAuth } from '../../middleware/auth';
+import { requireAuth } from '../middleware/auth';
 
 export const taskRouter = Router();
 
