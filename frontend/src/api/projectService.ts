@@ -14,10 +14,10 @@ const BASE = import.meta.env.VITE_API_URL!;
 // and your backend routes should look like '/api/projects' etc.
 
 function authHeaders() {
-  const token = localStorage.getItem('token');
+  // Since we're using HttpOnly cookies for authentication,
+  // we don't need to set Authorization headers
   return {
     'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
 
@@ -89,23 +89,14 @@ export async function updateTaskStatus(taskId: string, newStatus: string) {
   const url = `${BASE}/tasks/${taskId}/status`;
   console.log('PATCH →', url);
 
-  const token = localStorage.getItem('token');
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   const res = await fetch(url, {
     method: 'PATCH',
-    headers,
-    credentials: 'include', // Add this line
+    headers: authHeaders(),
+    credentials: 'include',
     body: JSON.stringify({ status: newStatus }),
   });
 
   if (res.status === 401) {
-    localStorage.removeItem('token');
     window.location.replace('/login');
     throw new Error('Not authorized');
   }
