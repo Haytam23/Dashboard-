@@ -6,15 +6,15 @@ import cookieParser from 'cookie-parser';
 
 // Import routers based on your file structure (backend/src/routes/)
 // ADDING BACK ROUTERS ONE BY ONE TO IDENTIFY THE PROBLEMATIC ONE
-import { authRouter } from './src/routes/auth';
-import { projectRouter } from './src/routes/projects';
-import { taskRouter } from './src/routes/tasks';
+// import { authRouter } from './src/routes/auth'; // Temporarily disabled
+// import { projectRouter } from './src/routes/projects'; // Temporarily disabled
+// import { taskRouter } from './src/routes/tasks'; // Temporarily disabled
 
 // Import middleware based on your file structure (backend/middleware/)
-import { requireAuth } from './middleware/auth';
+// import { requireAuth } from './middleware/auth'; // Temporarily disabled
 
 // Import database pool based on your file structure (backend/src/db.ts)
-import { pool } from './src/db';
+// import { pool } from './src/db'; // Temporarily disabled to test
 
 dotenv.config(); // Loads environment variables from .env file
 const app = express(); // Initialize Express app
@@ -59,12 +59,12 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 // Public Auth Endpoints (No authentication needed for login/register)
 console.log('Setting up basic routes...');
-app.use('/api/auth', authRouter);
+// app.use('/api/auth', authRouter); // Temporarily disabled
 
 // Protected Resource Endpoints (require authentication)
 console.log('Basic routes configured...');
-app.use('/api/projects', requireAuth, projectRouter);
-app.use('/api/tasks', requireAuth, taskRouter);
+// app.use('/api/projects', requireAuth, projectRouter); // Temporarily disabled
+// app.use('/api/tasks', requireAuth, taskRouter); // Temporarily disabled
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
