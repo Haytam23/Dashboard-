@@ -85,7 +85,7 @@ app.use(express.json());
 
 // Public Auth Endpoints (No authentication needed for login/register)
 console.log('Mounting /auth router...');
-app.use('/auth', authRouter);
+// app.use('/auth', authRouter);
 
 // Protected Resource Endpoints (require authentication)
 console.log('Mounting protected /projects and /tasks routers with requireAuth...');
