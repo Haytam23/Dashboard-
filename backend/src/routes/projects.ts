@@ -68,11 +68,12 @@ projectRouter.post('/', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to create project' });
     return;                  // <— stop further execution, but don’t return res
   }
-
   // 2) Insert tasks if any
   if (Array.isArray(tasks) && tasks.length) {
+    console.log(`[PROJECT CREATE] Processing ${tasks.length} tasks for project ${id}`);
     for (const t of tasks) {
       try {
+        console.log(`[PROJECT CREATE] Creating task: ${JSON.stringify(t)}`);
         const task: Tasks = {
           id: uuidv4(),
           projectId: id,
@@ -84,12 +85,16 @@ projectRouter.post('/', async (req: Request, res: Response) => {
           completedAt: undefined,
           priority: 'medium', // Default priority, can be changed later
         };
+        console.log(`[PROJECT CREATE] Task object created: ${JSON.stringify(task)}`);
         await tm.createTask(task);
+        console.log(`[PROJECT CREATE] Task "${t.name}" inserted successfully`);
       } catch (taskErr) {
-        console.error(`Failed to insert task "${t.name}":`, taskErr);
+        console.error(`[PROJECT CREATE] Failed to insert task "${t.name}":`, taskErr);
         // swallow and continue
       }
     }
+  } else {
+    console.log(`[PROJECT CREATE] No tasks to process for project ${id}`);
   }
 
   // 3) Return success
@@ -100,10 +105,12 @@ projectRouter.post('/', async (req: Request, res: Response) => {
 // GET /projects/:id/tasks
 projectRouter.get('/:id/tasks', async (req: Request, res: Response) => {
   try {
+    console.log(`[FETCH TASKS] Fetching tasks for project: ${req.params.id}`);
     const tasks = await tm.getTasksByProject(req.params.id);
+    console.log(`[FETCH TASKS] Found ${tasks.length} tasks for project ${req.params.id}`);
     res.json(tasks);
   } catch (err) {
-    console.error('Failed to fetch tasks:', err);
+    console.error('[FETCH TASKS] Failed to fetch tasks:', err);
     res.status(500).json({ error: 'Could not fetch tasks' });
   }
 });
