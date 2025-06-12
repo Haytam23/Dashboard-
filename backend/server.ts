@@ -102,22 +102,32 @@ const allowedOrigins = [
 
 // EXPLICIT OPTIONS HANDLER - MUST BE FIRST
 // This handles preflight requests for ALL routes
+// EXPLICIT OPTIONS HANDLER - MUST BE FIRST
+// This handles preflight requests for ALL routes
 app.options('*', (req: express.Request, res: express.Response) => {
-  const origin = req.headers.origin;
-  console.log(`OPTIONS preflight request from origin: ${origin}`);
-  
-  if (!origin || allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie, X-Requested-With, Accept, Origin');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Max-Age', '86400'); // Cache preflight for 24 hours
-    console.log(`OPTIONS preflight approved for origin: ${origin}`);
-    res.status(200).end();
-    return;
-  } else {
-    console.log(`OPTIONS preflight REJECTED for origin: ${origin}`);
-    res.status(403).end();
+  try {
+    const origin = req.headers.origin;
+    console.log(`OPTIONS preflight request from origin: ${origin}`);
+    console.log(`Allowed origins: ${allowedOrigins.join(', ')}`);
+    
+    // Check if origin is allowed
+    if (!origin || allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin || '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie, X-Requested-With, Accept, Origin');
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Max-Age', '86400'); // Cache preflight for 24 hours
+      console.log(`OPTIONS preflight approved for origin: ${origin}`);
+      res.status(200).end();
+      return;
+    } else {
+      console.log(`OPTIONS preflight REJECTED for origin: ${origin}. Allowed: ${allowedOrigins.join(', ')}`);
+      res.status(403).json({ error: 'Origin not allowed' });
+      return;
+    }
+  } catch (error) {
+    console.error('Error in OPTIONS handler:', error);
+    res.status(500).json({ error: 'Internal server error in OPTIONS handler' });
     return;
   }
 });
