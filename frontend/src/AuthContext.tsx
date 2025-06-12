@@ -103,7 +103,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Detect if we're running on Safari (especially iOS Safari)
   const isUsingSafari = isiOSSafari() || isSafari();
-
   // On mount: check session cookie
   useEffect(() => {
     const checkAuth = async () => {
@@ -112,11 +111,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
         
-        // For Safari, also check localStorage as fallback
+        // For Safari, check localStorage fallback FIRST
         if (isUsingSafari) {
           const savedAuth = localStorage.getItem('auth-safari-fallback');
           if (savedAuth) {
-            console.log('Safari: Found fallback auth state');
+            console.log('🍎 Safari: Found fallback auth state, setting authenticated');
+            setIsAuthed(true);
+            setIsLoading(false);
+            return; // Skip server check if fallback exists
           }
         }
         
@@ -136,20 +138,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (isUsingSafari) {
           if (authSuccess) {
             localStorage.setItem('auth-safari-fallback', 'true');
+            console.log('🍎 Safari: Cookies working, updated fallback');
           } else {
-            localStorage.removeItem('auth-safari-fallback');
+            // Don't remove fallback here - let login set it
+            console.log('🍎 Safari: Cookies not working for initial check');
           }
         }
-        
-      } catch (error) {
+          } catch (error) {
         console.log('Initial auth check failed:', error);
         
         // For Safari, check localStorage fallback
         if (isUsingSafari) {
           const fallbackAuth = localStorage.getItem('auth-safari-fallback');
           if (fallbackAuth) {
-            console.log('Safari: Using fallback auth state');
+            console.log('🍎 Safari: Using fallback auth state after error');
             setIsAuthed(true);
+            setIsLoading(false);
             return;
           }
         }
