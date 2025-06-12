@@ -89,8 +89,8 @@ app.use('/auth', authRouter);
 
 // Protected Resource Endpoints (require authentication)
 console.log('Mounting protected /projects and /tasks routers with requireAuth...');
-// app.use('/projects', requireAuth, projectRouter);
-app.use('/tasks', requireAuth, taskRouter);
+app.use('/projects', requireAuth, projectRouter);
+// app.use('/tasks', requireAuth, taskRouter);
 
 // Default route for health check or basic message
 // This is the route that should respond to GET /
