@@ -6,15 +6,15 @@ import cookieParser from 'cookie-parser';
 
 // Import routers based on your file structure (backend/src/routes/)
 // ADDING BACK ROUTERS ONE BY ONE TO IDENTIFY THE PROBLEMATIC ONE
-// import { authRouter } from './src/routes/auth';
-// import { projectRouter } from './src/routes/projects';
-// import { taskRouter } from './src/routes/tasks';
+import { authRouter } from './src/routes/auth';
+import { projectRouter } from './src/routes/projects';
+import { taskRouter } from './src/routes/tasks';
 
 // Import middleware based on your file structure (backend/middleware/)
-// import { requireAuth } from './middleware/auth';
+import { requireAuth } from './middleware/auth';
 
 // Import database pool based on your file structure (backend/src/db.ts)
-// import { pool } from './src/db';
+import { pool } from './src/db';
 
 dotenv.config(); // Loads environment variables from .env file
 const app = express(); // Initialize Express app
@@ -59,12 +59,22 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 // Public Auth Endpoints (No authentication needed for login/register)
 console.log('Setting up basic routes...');
-// app.use('/auth', authRouter);
+app.use('/api/auth', authRouter);
 
 // Protected Resource Endpoints (require authentication)
 console.log('Basic routes configured...');
-// app.use('/projects', requireAuth, projectRouter);
-// app.use('/tasks', requireAuth, taskRouter);
+app.use('/api/projects', requireAuth, projectRouter);
+app.use('/api/tasks', requireAuth, taskRouter);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK',
+    message: 'Project Management Backend API is healthy!', 
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
 
 // Default route for health check or basic message
 // This is the route that should respond to GET /
