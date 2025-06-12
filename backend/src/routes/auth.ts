@@ -125,8 +125,7 @@ authRouter.post(
       console.log('[LOGIN] Setting cookie and sending success response');
       console.log('[LOGIN] Cookie settings: httpOnly=true, secure=true, sameSite=none, maxAge=8h');
       console.log('[LOGIN] Request origin:', req.headers.origin);
-      console.log('[LOGIN] User-Agent:', req.headers['user-agent']);
-        res
+      console.log('[LOGIN] User-Agent:', req.headers['user-agent']);        res
         .cookie('token', token, {
           httpOnly: true,
           secure: true, // Always true for cross-origin cookies
@@ -134,7 +133,7 @@ authRouter.post(
           domain: '.vercel.app', // Allow cookie to be sent to all vercel.app subdomains
           maxAge: 1000 * 60 * 60 * 8, // 8 hours
         })
-        .json({ success: true });
+        .json({ success: true, token }); // Also include token in response for Safari fallback
       console.log('[LOGIN] Login successful for:', email);
     } catch (err) {
       console.error('[LOGIN] Unexpected error:', err);

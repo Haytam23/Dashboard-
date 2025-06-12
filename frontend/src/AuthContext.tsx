@@ -95,14 +95,21 @@ const isiOSSafari = () => {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent);
 };
 
+// Android Chrome detection
+const isAndroidChrome = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  return /android/.test(userAgent) && /chrome/.test(userAgent);
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthed, setIsAuthed] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Add loading state
   const navigate = useNavigate();
   const API = import.meta.env.VITE_API_URL;
-
   // Detect if we're running on Safari (especially iOS Safari)
   const isUsingSafari = isiOSSafari() || isSafari();
+  const isUsingAndroidChrome = isAndroidChrome();
+  
   // On mount: check session cookie
   useEffect(() => {
     const checkAuth = async () => {
@@ -113,16 +120,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // For Safari, check localStorage fallback FIRST
         if (isUsingSafari) {
+          const savedToken = localStorage.getItem('auth-token');
           const savedAuth = localStorage.getItem('auth-safari-fallback');
-          if (savedAuth) {
-            console.log('🍎 Safari: Found fallback auth state, setting authenticated');
+          if (savedAuth && savedToken) {
+            console.log('🍎 Safari: Found fallback auth state and token, setting authenticated');
             setIsAuthed(true);
             setIsLoading(false);
             return; // Skip server check if fallback exists
           }
         }
-        
-        const res = await fetch(`${API}/auth/whoami`, {
+          const res = await fetch(`${API}/auth/whoami`, {
           credentials: 'include',
           signal: controller.signal,
         });
@@ -130,9 +137,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         clearTimeout(timeoutId);
         const authSuccess = res.ok;
         setIsAuthed(authSuccess);
-        
-        console.log('Initial auth check result:', authSuccess);
+          console.log('Initial auth check result:', authSuccess);
+        console.log('Response status:', res.status);
         console.log('Browser detected as Safari:', isUsingSafari);
+        console.log('Browser detected as Android Chrome:', isUsingAndroidChrome);
         
         // For Safari, sync with localStorage fallback
         if (isUsingSafari) {
@@ -143,15 +151,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Don't remove fallback here - let login set it
             console.log('🍎 Safari: Cookies not working for initial check');
           }
-        }
-          } catch (error) {
+        }      } catch (error) {
         console.log('Initial auth check failed:', error);
+        console.log('Error type:', error instanceof Error ? error.name : typeof error);
+        console.log('User Agent:', navigator.userAgent);
         
         // For Safari, check localStorage fallback
         if (isUsingSafari) {
+          const savedToken = localStorage.getItem('auth-token');
           const fallbackAuth = localStorage.getItem('auth-safari-fallback');
-          if (fallbackAuth) {
+          if (fallbackAuth && savedToken) {
             console.log('🍎 Safari: Using fallback auth state after error');
+            setIsAuthed(true);
+            setIsLoading(false);
+            return;
+          }
+        }
+        
+        // For other browsers, if it's a network error, don't immediately mark as unauthenticated
+        if (error instanceof Error && (error.name === 'AbortError' || error.name === 'NetworkError' || error.message.includes('fetch'))) {
+          console.log('🌐 Network error during auth check, checking localStorage for recent login');
+          const recentToken = localStorage.getItem('auth-token');
+          if (recentToken) {
+            console.log('🔑 Found recent token, assuming authenticated');
             setIsAuthed(true);
             setIsLoading(false);
             return;
@@ -163,11 +185,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false); // Always set loading to false
       }
     };
-    checkAuth();
-  }, [API, isUsingSafari]);
+    checkAuth();  }, [API, isUsingSafari]);
+  
   // Perform login: server sets HttpOnly cookie
   const login = async (email: string, password: string) => {
     console.log('🔍 Login attempt - Safari detected:', isUsingSafari);
+    console.log('🔍 Login attempt - Android Chrome detected:', isUsingAndroidChrome);
     
     const res = await fetch(`${API}/auth/login`, {
       method: 'POST',
@@ -175,13 +198,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
-    
-    if (!res.ok) {
+      if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error || 'Login failed');
     }
     
+    // Get the response body which should contain the token for Safari fallback
+    const responseBody = await res.json();
     console.log('✅ Login request successful');
+      // Store token for all browsers (useful for network issues and Safari fallback)
+    if (responseBody.token) {
+      localStorage.setItem('auth-token', responseBody.token);
+      console.log('🔑 Token stored in localStorage');
+    }
     
     // Immediately set auth state and wait a moment for cookie to be available
     setIsAuthed(true);
@@ -242,10 +271,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
     setIsAuthed(false);
     
-    // Clear Safari fallback
+    // Clear Safari fallback and token
     if (isUsingSafari) {
       localStorage.removeItem('auth-safari-fallback');
-      console.log('🍎 Safari: Cleared fallback auth');
+      localStorage.removeItem('auth-token');
+      console.log('🍎 Safari: Cleared fallback auth and token');
+    } else {
+      // Clear token for all browsers as a cleanup
+      localStorage.removeItem('auth-token');
     }
     
     navigate('/login', { replace: true });

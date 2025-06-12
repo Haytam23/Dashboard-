@@ -24,26 +24,42 @@ const isSafari = () => {
 };
 
 function authHeaders() {
-  // Since we're using HttpOnly cookies for authentication,
-  // we don't need to set Authorization headers
-  return {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+  
+  // Check if we need to use Bearer token authentication
+  const isUsingSafari = isiOSSafari() || isSafari();
+  const hasSafariFallback = localStorage.getItem('auth-safari-fallback');
+  const storedToken = localStorage.getItem('auth-token');
+  
+  // Use Bearer token if:
+  // 1. Safari with fallback enabled, OR
+  // 2. Any browser with a stored token (for network resilience)
+  if (storedToken && (isUsingSafari && hasSafariFallback)) {
+    console.log('🔑 Using Bearer token for API authentication');
+    headers['Authorization'] = `Bearer ${storedToken}`;
+  }
+  
+  return headers;
 }
 
 async function handleResponse(res: Response) {
   if (res.status === 401) {
-    // Check if we're on Safari with fallback auth before redirecting
+    // Check if we're on Safari with fallback auth
     const isUsingSafari = isiOSSafari() || isSafari();
     const hasSafariFallback = localStorage.getItem('auth-safari-fallback');
+    const storedToken = localStorage.getItem('auth-token');
     
-    if (isUsingSafari && hasSafariFallback) {
-      console.log('🍎 Safari: API call got 401 but we have fallback auth');
-      // Throw a special error that components can handle gracefully
-      throw new Error('SAFARI_COOKIE_BLOCKED');
+    if (isUsingSafari && hasSafariFallback && storedToken) {
+      console.log('🍎 Safari: API call got 401 - token may be expired');
+      // Clear invalid token and fallback
+      localStorage.removeItem('auth-safari-fallback');
+      localStorage.removeItem('auth-token');
+      console.log('🍎 Safari: Cleared invalid token, redirecting to login');
     }
     
-    // For non-Safari or Safari without fallback, redirect to login
+    // For all cases of 401, redirect to login
     console.log('❌ API: 401 unauthorized, redirecting to login');
     window.location.href = '/login';
     return Promise.reject(new Error('Unauthorized'));
