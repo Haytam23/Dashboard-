@@ -6,15 +6,15 @@ import cookieParser from 'cookie-parser';
 
 // Import routers based on your file structure (backend/src/routes/)
 // ADDING BACK ROUTERS ONE BY ONE TO IDENTIFY THE PROBLEMATIC ONE
-import { authRouter } from './src/routes/auth';
-import { projectRouter } from './src/routes/projects';
-import { taskRouter } from './src/routes/tasks';
+// import { authRouter } from './src/routes/auth';
+// import { projectRouter } from './src/routes/projects';
+// import { taskRouter } from './src/routes/tasks';
 
 // Import middleware based on your file structure (backend/middleware/)
-import { requireAuth } from './middleware/auth';
+// import { requireAuth } from './middleware/auth';
 
 // Import database pool based on your file structure (backend/src/db.ts)
-import { pool } from './src/db';
+// import { pool } from './src/db';
 
 dotenv.config(); // Loads environment variables from .env file
 const app = express(); // Initialize Express app
@@ -59,12 +59,12 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 // Public Auth Endpoints (No authentication needed for login/register)
 console.log('Setting up basic routes...');
-app.use('/auth', authRouter);
+// app.use('/auth', authRouter);
 
 // Protected Resource Endpoints (require authentication)
 console.log('Basic routes configured...');
-app.use('/projects', requireAuth, projectRouter);
-app.use('/tasks', requireAuth, taskRouter);
+// app.use('/projects', requireAuth, projectRouter);
+// app.use('/tasks', requireAuth, taskRouter);
 
 // Default route for health check or basic message
 // This is the route that should respond to GET /
@@ -95,14 +95,16 @@ app.use('*', (req, res) => {
 async function init() {
   try {
     console.log('Backend initializing...');
-    console.log('Attempting to connect to PostgreSQL database...');
+    console.log('Running in minimal mode for debugging...');
+    // Temporarily disabled database connection for debugging
+    // console.log('Attempting to connect to PostgreSQL database...');
     // Only test connection if DATABASE_URL is available
-    if (process.env.DATABASE_URL) {
-      await pool.query('SELECT 1;');
-      console.log('PostgreSQL database connected successfully!');
-    } else {
-      console.warn('DATABASE_URL not set - running without database connection');
-    }
+    // if (process.env.DATABASE_URL) {
+    //   await pool.query('SELECT 1;');
+    //   console.log('PostgreSQL database connected successfully!');
+    // } else {
+    //   console.warn('DATABASE_URL not set - running without database connection');
+    // }
   } catch (error) {
     console.error('WARNING: Failed to establish database connection during initialization:', error);
     // In a serverless environment, don't crash the server - just log the warning
