@@ -21,8 +21,25 @@ const app = express(); // Initialize Express app
 const allowedOrigins = [
   'http://localhost:5173', // Local development
   'https://dashboard-frontend-haytamraiss23-gmailcoms-projects.vercel.app',
-  'https://dashboard-frontend-one-pi.vercel.app' // Current frontend deployment
+  'https://dashboard-frontend-one-pi.vercel.app', // Current frontend deployment
+  'https://dashboard-frontend-one-pi.vercel.app/', // With trailing slash
+  // Add pattern for any dashboard-frontend on vercel
+  /^https:\/\/dashboard-frontend-.*\.vercel\.app$/
 ]
+
+// Helper function to check if origin is allowed
+function isOriginAllowed(origin: string | undefined): boolean {
+  if (!origin) return true; // Allow requests with no origin
+  
+  for (const allowedOrigin of allowedOrigins) {
+    if (typeof allowedOrigin === 'string') {
+      if (origin === allowedOrigin) return true;
+    } else if (allowedOrigin instanceof RegExp) {
+      if (allowedOrigin.test(origin)) return true;
+    }
+  }
+  return false;
+}
 
 // EXPLICIT OPTIONS HANDLER - MUST BE FIRST
 // This handles preflight requests for ALL routes
@@ -31,9 +48,8 @@ app.options('*', (req: express.Request, res: express.Response) => {
     const origin = req.headers.origin;
     console.log(`OPTIONS preflight request from origin: ${origin}`);
     console.log(`Allowed origins: ${allowedOrigins.join(', ')}`);
-    
-    // Check if origin is allowed
-    if (!origin || allowedOrigins.includes(origin)) {
+      // Check if origin is allowed
+    if (isOriginAllowed(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin || '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie, X-Requested-With, Accept, Origin');
@@ -43,7 +59,7 @@ app.options('*', (req: express.Request, res: express.Response) => {
       res.status(200).end();
       return;
     } else {
-      console.log(`OPTIONS preflight REJECTED for origin: ${origin}. Allowed: ${allowedOrigins.join(', ')}`);
+      console.log(`OPTIONS preflight REJECTED for origin: ${origin}. Allowed: ${allowedOrigins.map(o => o.toString()).join(', ')}`);
       res.status(403).json({ error: 'Origin not allowed' });
       return;
     }
@@ -63,12 +79,11 @@ app.use(cors({
       console.log("CORS: Origin undefined, allowing.");
       return callback(null, true);
     }
-    
-    if (allowedOrigins.includes(origin)) { // Use .includes() for clarity
+      if (isOriginAllowed(origin)) {
       console.log(`CORS: Origin '${origin}' is allowed.`);
       return callback(null, true);
     } else {
-      const msg = `CORS Error: Origin '${origin}' is not allowed by the backend's CORS policy. Allowed: ${allowedOrigins.join(', ')}.`;
+      const msg = `CORS Error: Origin '${origin}' is not allowed by the backend's CORS policy. Allowed: ${allowedOrigins.map(o => o.toString()).join(', ')}.`;
       console.error(msg);
       return callback(new Error(msg), false);
     }
