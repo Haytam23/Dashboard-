@@ -75,6 +75,7 @@
 // startServer();
 
 
+
 // backend/server.ts
 import express from 'express';
 import cors from 'cors';
@@ -87,10 +88,10 @@ import { taskRouter } from './src/routes/tasks';
 import { authRouter } from './src/routes/auth';
 
 // Import middleware based on your file structure (backend/middleware/)
-import { requireAuth } from './middleware/auth'; 
+import { requireAuth } from './middleware/auth';
 
 // Import database pool based on your file structure (backend/src/db.ts)
-import { pool } from './src/db'; 
+import { pool } from './src/db';
 
 dotenv.config(); // Loads environment variables from .env file
 const app = express(); // Initialize Express app
@@ -101,16 +102,39 @@ const allowedOrigins = [
   // Copy it from your browser's console using `window.location.origin` if unsure.
   'https://dashboard-lafarge-frontend.vercel.app' // This should be the exact value from window.location.origin
 ]
-// CORS Middleware - MUST BE APPLIED FIRST
+
+// EXPLICIT OPTIONS HANDLER - MUST BE FIRST
+// This handles preflight requests for ALL routes
+app.options('*', (req: express.Request, res: express.Response) => {
+  const origin = req.headers.origin;
+  console.log(`OPTIONS preflight request from origin: ${origin}`);
+  
+  if (!origin || allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400'); // Cache preflight for 24 hours
+    console.log(`OPTIONS preflight approved for origin: ${origin}`);
+    res.status(200).end();
+    return;
+  } else {
+    console.log(`OPTIONS preflight REJECTED for origin: ${origin}`);
+    res.status(403).end();
+    return;
+  }
+});
+
+// CORS Middleware - APPLIED AFTER OPTIONS HANDLER
 app.use(cors({
   origin: function (origin, callback) {
-    console.log(`CORS check: Request Origin: ${origin}`); 
-
+    console.log(`CORS check: Request Origin: ${origin}`);
+    
     if (!origin) { // Allow requests with no origin (e.g., direct browser access, curl)
       console.log("CORS: Origin undefined, allowing.");
       return callback(null, true);
     }
-
+    
     if (allowedOrigins.includes(origin)) { // Use .includes() for clarity
       console.log(`CORS: Origin '${origin}' is allowed.`);
       return callback(null, true);
@@ -124,6 +148,7 @@ app.use(cors({
   credentials: true, // Allow cookies/credentials
   exposedHeaders: ['Set-Cookie'] // Important if you're setting cookies
 }));
+
 // Other general middleware
 app.use(cookieParser());
 app.use(express.json());
@@ -153,7 +178,8 @@ async function init() {
   try {
     console.log('Attempting to connect to PostgreSQL database...');
     // A simple query to test the connection.
-    await pool.query('SELECT 1;'); 
+    await pool.query('SELECT 1;');
+    
     console.log('PostgreSQL database connected successfully!');
   } catch (error) {
     console.error('FATAL ERROR: Failed to establish database connection during initialization:', error);
