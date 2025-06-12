@@ -84,11 +84,26 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Safari detection utility
+const isSafari = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  return /safari/.test(userAgent) && !/chrome/.test(userAgent) && !/android/.test(userAgent);
+};
+
+// iOS Safari detection (more specific)
+const isiOSSafari = () => {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent);
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthed, setIsAuthed] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Add loading state
   const navigate = useNavigate();
   const API = import.meta.env.VITE_API_URL;
+
+  // Detect if we're running on Safari (especially iOS Safari)
+  const isUsingSafari = isiOSSafari() || isSafari();
+
   // On mount: check session cookie
   useEffect(() => {
     const checkAuth = async () => {
@@ -97,26 +112,59 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
         
+        // For Safari, also check localStorage as fallback
+        if (isUsingSafari) {
+          const savedAuth = localStorage.getItem('auth-safari-fallback');
+          if (savedAuth) {
+            console.log('Safari: Found fallback auth state');
+          }
+        }
+        
         const res = await fetch(`${API}/auth/whoami`, {
           credentials: 'include',
           signal: controller.signal,
         });
         
         clearTimeout(timeoutId);
-        setIsAuthed(res.ok);
-        console.log('Initial auth check result:', res.ok);
+        const authSuccess = res.ok;
+        setIsAuthed(authSuccess);
+        
+        console.log('Initial auth check result:', authSuccess);
+        console.log('Browser detected as Safari:', isUsingSafari);
+        
+        // For Safari, sync with localStorage fallback
+        if (isUsingSafari) {
+          if (authSuccess) {
+            localStorage.setItem('auth-safari-fallback', 'true');
+          } else {
+            localStorage.removeItem('auth-safari-fallback');
+          }
+        }
+        
       } catch (error) {
         console.log('Initial auth check failed:', error);
+        
+        // For Safari, check localStorage fallback
+        if (isUsingSafari) {
+          const fallbackAuth = localStorage.getItem('auth-safari-fallback');
+          if (fallbackAuth) {
+            console.log('Safari: Using fallback auth state');
+            setIsAuthed(true);
+            return;
+          }
+        }
+        
         setIsAuthed(false);
       } finally {
         setIsLoading(false); // Always set loading to false
       }
     };
     checkAuth();
-  }, [API]);
-
+  }, [API, isUsingSafari]);
   // Perform login: server sets HttpOnly cookie
   const login = async (email: string, password: string) => {
+    console.log('🔍 Login attempt - Safari detected:', isUsingSafari);
+    
     const res = await fetch(`${API}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -129,36 +177,73 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(body.error || 'Login failed');
     }
     
+    console.log('✅ Login request successful');
+    
     // Immediately set auth state and wait a moment for cookie to be available
     setIsAuthed(true);
     
+    // For Safari, set fallback immediately since cookies might not work
+    if (isUsingSafari) {
+      localStorage.setItem('auth-safari-fallback', 'true');
+      console.log('🍎 Safari: Set localStorage fallback');
+    }
+    
     // Small delay to ensure cookie is properly set before navigation
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 200)); // Increased delay for Safari
     
     // Verify auth state with server before proceeding
     try {
       const verifyRes = await fetch(`${API}/auth/whoami`, {
         credentials: 'include',
       });
+      
       if (!verifyRes.ok) {
-        console.warn('Auth verification failed after login');
+        console.warn('⚠️ Auth verification failed after login');
+        
+        // For Safari, if verification fails but we have fallback, proceed anyway
+        if (isUsingSafari && localStorage.getItem('auth-safari-fallback')) {
+          console.log('🍎 Safari: Cookie verification failed, but using fallback auth');
+          // Don't throw error for Safari - rely on fallback
+          return;
+        }
+        
         setIsAuthed(false);
         throw new Error('Authentication verification failed');
       }
+      
       console.log('✅ Login and auth verification successful');
+      
+      // If verification succeeded and we're on Safari, we can trust cookies work
+      if (isUsingSafari) {
+        console.log('🍎 Safari: Cookie verification successful!');
+      }
+      
     } catch (error) {
       console.error('Auth verification error:', error);
+      
+      // For Safari, if verification fails but we have fallback, proceed anyway
+      if (isUsingSafari && localStorage.getItem('auth-safari-fallback')) {
+        console.log('🍎 Safari: Verification failed, but proceeding with fallback');
+        return; // Don't throw error
+      }
+      
       setIsAuthed(false);
       throw error;
     }
-  };
-  // Perform logout: server clears the cookie
+  };  // Perform logout: server clears the cookie
   const logout = async () => {
     await fetch(`${API}/auth/logout`, {
       method: 'POST',
       credentials: 'include',
     });
     setIsAuthed(false);
+    
+    // Clear Safari fallback
+    if (isUsingSafari) {
+      localStorage.removeItem('auth-safari-fallback');
+      console.log('🍎 Safari: Cleared fallback auth');
+    }
+    
     navigate('/login', { replace: true });
   };
   return (
