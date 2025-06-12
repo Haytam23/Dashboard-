@@ -12,7 +12,6 @@ export function requireAuth(
     console.log('requireAuth: OPTIONS request detected, bypassing authentication.');
     return next(); // Crucial for preflight requests
   }
-
   // First try to get token from cookie (for cookie-based auth)
   let token = req.cookies?.token;
   
@@ -24,8 +23,12 @@ export function requireAuth(
     }
   }
 
-  console.log('requireAuth: Cookie token:', req.cookies?.token ? 'Found' : 'Not found');
-  console.log('requireAuth: Auth header:', req.headers.authorization ? 'Found' : 'Not found');
+  // Enhanced logging for cookie debugging
+  console.log('requireAuth: All cookies received:', JSON.stringify(req.cookies || {}));
+  console.log('requireAuth: Cookie header:', req.headers.cookie || 'No cookie header');
+  console.log('requireAuth: User-Agent:', req.headers['user-agent'] || 'No user agent');
+  console.log('requireAuth: Origin:', req.headers.origin || 'No origin');
+  console.log('requireAuth: Token found:', token ? 'Yes' : 'No');
 
   if (!token) {
     console.warn('requireAuth: No authorization token found, sending 401.');

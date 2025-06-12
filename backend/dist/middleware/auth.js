@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.requireAuth = requireAuth;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 function requireAuth(req, res, next) {
-    var _a, _b;
+    var _a;
     // Allow OPTIONS requests to pass through without authentication
     if (req.method === 'OPTIONS') {
         console.log('requireAuth: OPTIONS request detected, bypassing authentication.');
@@ -21,8 +21,12 @@ function requireAuth(req, res, next) {
             token = authHeader.split(' ')[1];
         }
     }
-    console.log('requireAuth: Cookie token:', ((_b = req.cookies) === null || _b === void 0 ? void 0 : _b.token) ? 'Found' : 'Not found');
-    console.log('requireAuth: Auth header:', req.headers.authorization ? 'Found' : 'Not found');
+    // Enhanced logging for cookie debugging
+    console.log('requireAuth: All cookies received:', JSON.stringify(req.cookies || {}));
+    console.log('requireAuth: Cookie header:', req.headers.cookie || 'No cookie header');
+    console.log('requireAuth: User-Agent:', req.headers['user-agent'] || 'No user agent');
+    console.log('requireAuth: Origin:', req.headers.origin || 'No origin');
+    console.log('requireAuth: Token found:', token ? 'Yes' : 'No');
     if (!token) {
         console.warn('requireAuth: No authorization token found, sending 401.');
         res.sendStatus(401);

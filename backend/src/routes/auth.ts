@@ -123,6 +123,10 @@ authRouter.post(
         expiresIn: '8h',
       });      // Set it as a Secure, HttpOnly cookie
       console.log('[LOGIN] Setting cookie and sending success response');
+      console.log('[LOGIN] Cookie settings: httpOnly=true, secure=true, sameSite=none, maxAge=8h');
+      console.log('[LOGIN] Request origin:', req.headers.origin);
+      console.log('[LOGIN] User-Agent:', req.headers['user-agent']);
+      
       res
         .cookie('token', token, {
           httpOnly: true,
