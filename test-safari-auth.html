@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safari Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        #log {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍎 Safari Authentication Test</h1>
+        <div id="browserInfo" class="info"></div>
+        
+        <h3>Step 1: Login</h3>
+        <input type="email" id="email" placeholder="Email" value="admin@dashboard.com">
+        <input type="password" id="password" placeholder="Password" value="H2@@3/**/">
+        <button class="button" onclick="testLogin()">Test Login</button>
+        
+        <h3>Step 2: Test API Calls</h3>
+        <button class="button" onclick="testWhoami()">Test Whoami</button>
+        <button class="button" onclick="testProjects()">Test Fetch Projects</button>
+        <button class="button" onclick="testCreateProject()">Test Create Project</button>
+        
+        <h3>Step 3: Authentication Info</h3>
+        <button class="button" onclick="checkAuthState()">Check Auth State</button>
+        <button class="button" onclick="clearAuth()">Clear Auth</button>
+        
+        <div id="status"></div>
+        
+        <h3>Debug Log</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+        
+        // Browser detection
+        const isSafari = () => {
+            const userAgent = navigator.userAgent.toLowerCase();
+            return /safari/.test(userAgent) && !/chrome/.test(userAgent) && !/android/.test(userAgent);
+        };
+        
+        const isiOSSafari = () => {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent);
+        };
+        
+        // Logging function
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+        
+        // Status display
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = type;
+            statusDiv.textContent = message;
+            log(`STATUS (${type}): ${message}`);
+        }
+        
+        // Auth headers function
+        function getAuthHeaders() {
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            
+            const isUsingSafari = isiOSSafari() || isSafari();
+            const hasSafariFallback = localStorage.getItem('auth-safari-fallback');
+            const storedToken = localStorage.getItem('auth-token');
+            
+            if (isUsingSafari && hasSafariFallback && storedToken) {
+                log('🍎 Safari: Using Bearer token for API authentication');
+                headers['Authorization'] = `Bearer ${storedToken}`;
+            }
+            
+            return headers;
+        }
+        
+        // Test login
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                log(`🔍 Starting login test for: ${email}`);
+                const isUsingSafari = isiOSSafari() || isSafari();
+                log(`Browser detection - Safari: ${isUsingSafari}, iOS Safari: ${isiOSSafari()}`);
+                
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password }),
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || 'Login failed');
+                }
+                
+                const responseBody = await response.json();
+                log(`✅ Login successful: ${JSON.stringify(responseBody)}`);
+                
+                // Store token for Safari fallback
+                if (responseBody.token) {
+                    localStorage.setItem('auth-token', responseBody.token);
+                    log('🔑 Token stored in localStorage');
+                }
+                
+                // For Safari, set fallback
+                if (isUsingSafari) {
+                    localStorage.setItem('auth-safari-fallback', 'true');
+                    log('🍎 Safari: Set localStorage fallback');
+                }
+                
+                showStatus('Login successful!', 'success');
+                
+            } catch (error) {
+                log(`❌ Login failed: ${error.message}`);
+                showStatus(`Login failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test whoami
+        async function testWhoami() {
+            try {
+                log('🔍 Testing whoami endpoint...');
+                const response = await fetch(`${API_URL}/auth/whoami`, {
+                    headers: getAuthHeaders(),
+                    credentials: 'include',
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                log(`✅ Whoami successful: ${JSON.stringify(data)}`);
+                showStatus('Whoami successful!', 'success');
+                
+            } catch (error) {
+                log(`❌ Whoami failed: ${error.message}`);
+                showStatus(`Whoami failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test fetch projects
+        async function testProjects() {
+            try {
+                log('🔍 Testing fetch projects...');
+                const response = await fetch(`${API_URL}/projects`, {
+                    headers: getAuthHeaders(),
+                    credentials: 'include',
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                log(`✅ Fetch projects successful: ${JSON.stringify(data)}`);
+                showStatus(`Fetch projects successful! Found ${data.length} projects`, 'success');
+                
+            } catch (error) {
+                log(`❌ Fetch projects failed: ${error.message}`);
+                showStatus(`Fetch projects failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test create project
+        async function testCreateProject() {
+            try {
+                log('🔍 Testing create project...');
+                const projectData = {
+                    name: 'Safari Test Project',
+                    description: 'Project created from Safari auth test',
+                    startDate: '2025-06-12',
+                    endDate: '2025-12-12',
+                    category: 'Development',
+                    priority: 'medium'
+                };
+                
+                const response = await fetch(`${API_URL}/projects`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    credentials: 'include',
+                    body: JSON.stringify(projectData),
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                log(`✅ Create project successful: ${JSON.stringify(data)}`);
+                showStatus('Create project successful!', 'success');
+                
+            } catch (error) {
+                log(`❌ Create project failed: ${error.message}`);
+                showStatus(`Create project failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Check auth state
+        function checkAuthState() {
+            const token = localStorage.getItem('auth-token');
+            const fallback = localStorage.getItem('auth-safari-fallback');
+            const isUsingSafari = isiOSSafari() || isSafari();
+            
+            log('🔍 Current authentication state:');
+            log(`  - Safari detected: ${isUsingSafari}`);
+            log(`  - iOS Safari: ${isiOSSafari()}`);
+            log(`  - Auth token: ${token ? 'Present' : 'Not found'}`);
+            log(`  - Safari fallback: ${fallback ? 'Enabled' : 'Disabled'}`);
+            log(`  - User Agent: ${navigator.userAgent}`);
+            
+            showStatus('Auth state logged to console', 'info');
+        }
+        
+        // Clear auth
+        function clearAuth() {
+            localStorage.removeItem('auth-token');
+            localStorage.removeItem('auth-safari-fallback');
+            log('🧹 Cleared all authentication data');
+            showStatus('Authentication data cleared', 'info');
+        }
+        
+        // Initialize page
+        function init() {
+            const isUsingSafari = isiOSSafari() || isSafari();
+            const browserInfo = document.getElementById('browserInfo');
+            
+            browserInfo.innerHTML = `
+                <strong>Browser Detection:</strong><br>
+                Safari: ${isSafari()}<br>
+                iOS Safari: ${isiOSSafari()}<br>
+                Combined Safari: ${isUsingSafari}<br>
+                User Agent: ${navigator.userAgent}
+            `;
+            
+            log('🚀 Safari Authentication Test initialized');
+            log(`Browser: ${isUsingSafari ? 'Safari' : 'Other'}`);
+            
+            checkAuthState();
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

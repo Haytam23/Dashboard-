@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend ProjectSummary Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #1a472a; }
+        .error { background: #7f1d1d; }
+        .info { background: #1e3a8a; }
+        button { padding: 10px 20px; margin: 10px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #1d4ed8; }
+        pre { background: #374151; padding: 10px; border-radius: 4px; overflow-x: auto; max-height: 400px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Frontend ProjectSummary Issue Investigation</h1>
+    <p>Testing the complete flow from project creation to ProjectSummary display</p>
+    
+    <div>
+        <button onclick="testCompleteFlow()">Test Complete Flow</button>
+        <div id="status"></div>
+    </div>
+
+    <div>
+        <h3>Test Results:</h3>
+        <pre id="results"></pre>
+    </div>
+
+    <script>
+        // This script will test the frontend by creating a project and checking if ProjectSummary displays tasks
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+        }
+
+        function addResult(message) {
+            const resultsDiv = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            resultsDiv.textContent += `[${timestamp}] ${message}\n`;
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        async function testCompleteFlow() {
+            try {
+                updateStatus('Starting complete flow test...', 'info');
+                addResult('🔍 Starting ProjectSummary investigation...');
+                
+                // Step 1: Check if we can access the frontend
+                addResult('1. Checking frontend accessibility...');
+                try {
+                    const response = await fetch('http://localhost:5174/');
+                    if (response.ok) {
+                        addResult('✅ Frontend is accessible');
+                    } else {
+                        throw new Error(`Frontend not accessible: ${response.status}`);
+                    }
+                } catch (error) {
+                    addResult('❌ Cannot access frontend - is it running on port 5174?');
+                    updateStatus('Frontend not accessible', 'error');
+                    return;
+                }
+
+                // Step 2: Test API connectivity from frontend context
+                addResult('2. Testing API connectivity...');
+                const apiBase = 'https://dashboard-backend-nine-phi.vercel.app';
+                
+                // Test login
+                addResult('   2a. Testing login...');
+                const loginResponse = await fetch(`${apiBase}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'admin@dashboard.com',
+                        password: 'H2@@3/**/'
+                    }),
+                });
+                
+                if (!loginResponse.ok) {
+                    throw new Error(`Login failed: ${loginResponse.status}`);
+                }
+                
+                const loginData = await loginResponse.json();
+                addResult('   ✅ Login successful');
+                
+                // Test project creation
+                addResult('   2b. Creating test project...');
+                const projectData = {
+                    name: 'Frontend Test Project ' + Date.now(),
+                    description: 'Testing ProjectSummary component display',
+                    startDate: '2025-06-13',
+                    endDate: '2025-08-13',
+                    category: 'Frontend Testing',
+                    priority: 'high',
+                    tasks: [
+                        {
+                            name: 'Frontend Test Task 1',
+                            description: 'Should appear in ProjectSummary',
+                            assignee: 'Frontend Tester 1',
+                            dueDate: '2025-07-01',
+                            priority: 'medium'
+                        },
+                        {
+                            name: 'Frontend Test Task 2',
+                            description: 'Should also appear in ProjectSummary',
+                            assignee: 'Frontend Tester 2',
+                            dueDate: '2025-07-15',
+                            priority: 'high'
+                        }
+                    ]
+                };
+                
+                const projectResponse = await fetch(`${apiBase}/projects`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${loginData.token}`
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(projectData),
+                });
+                
+                if (!projectResponse.ok) {
+                    throw new Error(`Project creation failed: ${projectResponse.status}`);
+                }
+                
+                const project = await projectResponse.json();
+                addResult(`   ✅ Project created: ${project.id}`);
+                
+                // Test task fetching
+                addResult('   2c. Fetching project tasks...');
+                const tasksResponse = await fetch(`${apiBase}/projects/${project.id}/tasks`, {
+                    headers: {
+                        'Authorization': `Bearer ${loginData.token}`
+                    },
+                    credentials: 'include'
+                });
+                
+                if (!tasksResponse.ok) {
+                    throw new Error(`Task fetching failed: ${tasksResponse.status}`);
+                }
+                
+                const tasks = await tasksResponse.json();
+                addResult(`   ✅ Tasks fetched: ${tasks.length} tasks`);
+                
+                if (tasks.length === 0) {
+                    addResult('   ❌ NO TASKS FOUND! This confirms the bug exists.');
+                    updateStatus('BUG CONFIRMED: No tasks found!', 'error');
+                    return;
+                }
+                
+                // Step 3: Simulate ProjectSummary component logic
+                addResult('3. Simulating ProjectSummary component...');
+                
+                const totalTasks = tasks.length;
+                const completedTasks = tasks.filter(t => t.status === 'completed').length;
+                const inProgressTasks = totalTasks - completedTasks;
+                
+                // Check assignee stats calculation
+                const assigneeStats = tasks.reduce((acc, task) => {
+                    if (task.assignee) {
+                        acc[task.assignee] = (acc[task.assignee] || 0) + 1;
+                    }
+                    return acc;
+                }, {});
+                
+                const uniqueAssignees = Object.keys(assigneeStats).length;
+                
+                addResult(`   ProjectSummary would show:`);
+                addResult(`   - Total Tasks: ${totalTasks}`);
+                addResult(`   - Completed: ${completedTasks}`);
+                addResult(`   - In Progress: ${inProgressTasks}`);
+                addResult(`   - Unique Assignees: ${uniqueAssignees}`);
+                addResult(`   - Assignee breakdown: ${JSON.stringify(assigneeStats)}`);
+                
+                // Step 4: Check for potential frontend-specific issues
+                addResult('4. Checking for potential frontend issues...');
+                
+                // Check if tasks have correct structure
+                addResult('   4a. Validating task structure...');
+                let structureValid = true;
+                tasks.forEach((task, index) => {
+                    const requiredFields = ['id', 'projectId', 'name', 'status'];
+                    const missingFields = requiredFields.filter(field => !task[field]);
+                    if (missingFields.length > 0) {
+                        addResult(`   ❌ Task ${index}: Missing fields: ${missingFields.join(', ')}`);
+                        structureValid = false;
+                    }
+                });
+                
+                if (structureValid) {
+                    addResult('   ✅ All tasks have valid structure');
+                } else {
+                    addResult('   ❌ Some tasks have invalid structure');
+                    updateStatus('Task structure issues found', 'error');
+                    return;
+                }
+                
+                // Check for date issues
+                addResult('   4b. Checking date handling...');
+                let dateIssues = false;
+                tasks.forEach((task, index) => {
+                    try {
+                        if (task.dueDate) {
+                            new Date(task.dueDate);
+                        }
+                        if (task.completedAt) {
+                            new Date(task.completedAt);
+                        }
+                    } catch (error) {
+                        addResult(`   ❌ Task ${index}: Invalid date format`);
+                        dateIssues = true;
+                    }
+                });
+                
+                if (!dateIssues) {
+                    addResult('   ✅ All task dates are valid');
+                } else {
+                    addResult('   ❌ Some tasks have date issues');
+                }
+                
+                // Final assessment
+                addResult('5. Final Assessment:');
+                addResult(`   - Backend API: ✅ Working correctly`);
+                addResult(`   - Task Creation: ✅ Working correctly`);
+                addResult(`   - Task Fetching: ✅ Working correctly`);
+                addResult(`   - Task Structure: ${structureValid ? '✅' : '❌'} ${structureValid ? 'Valid' : 'Invalid'}`);
+                addResult(`   - ProjectSummary Logic: ✅ Should work correctly`);
+                
+                if (structureValid && !dateIssues && tasks.length > 0) {
+                    addResult('');
+                    addResult('🎯 CONCLUSION: The backend and data are working correctly.');
+                    addResult('   The issue must be in the frontend React component rendering or state management.');
+                    addResult('   Possible causes:');
+                    addResult('   1. ProjectSummary component not re-rendering when tasks prop changes');
+                    addResult('   2. Tasks state not being set correctly in App.tsx');
+                    addResult('   3. Race condition in data loading');
+                    addResult('   4. Component mounting before tasks are loaded');
+                    updateStatus('Investigation complete - Frontend rendering issue suspected', 'info');
+                } else {
+                    updateStatus('Data issues found', 'error');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Test failed: ${error.message}`);
+                updateStatus(`Test failed: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

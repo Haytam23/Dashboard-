@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProjectSummary Fix Verification</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #444; border-radius: 8px; }
+        .success { border-color: #22c55e; background: #1a472a; }
+        .error { border-color: #ef4444; background: #7f1d1d; }
+        .info { border-color: #3b82f6; background: #1e3a8a; }
+        .warning { border-color: #f59e0b; background: #92400e; }
+        button { padding: 10px 20px; margin: 5px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #1d4ed8; }
+        pre { background: #374151; padding: 10px; border-radius: 4px; max-height: 300px; overflow-y: auto; }
+        .highlight { background: #fbbf24; color: #000; padding: 2px 4px; border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 ProjectSummary Fix Verification</h1>
+    <p>Testing if our fix resolves the task display issue in ProjectSummary component</p>
+    
+    <div class="step info">
+        <h3>✅ What we fixed:</h3>
+        <ul>
+            <li>Added <span class="highlight">setTasks([])</span> when project changes to clear old tasks</li>
+            <li>Added debugging logs to track task data flow</li>
+            <li>Improved UI messages for empty task states</li>
+        </ul>
+    </div>
+
+    <div class="step">
+        <h3>🧪 Test Procedure:</h3>
+        <ol>
+            <li><button onclick="step1()">Step 1: Login & Create Project</button></li>
+            <li><button onclick="step2()">Step 2: Verify Frontend Task Display</button></li>
+            <li><button onclick="step3()">Step 3: Test ProjectSummary Component</button></li>
+        </ol>
+        <div id="testStatus"></div>
+    </div>
+
+    <div class="step">
+        <h3>📊 Test Results:</h3>
+        <pre id="results"></pre>
+    </div>
+
+    <div class="step">
+        <h3>🎯 Manual Testing Instructions:</h3>
+        <ol>
+            <li>Open the frontend: <a href="http://localhost:5174" target="_blank" style="color: #60a5fa;">http://localhost:5174</a></li>
+            <li>Login with: admin@dashboard.com / H2@@3/**/</li>
+            <li>Create a new project with tasks</li>
+            <li>Select the project and check if tasks appear in ProjectSummary</li>
+            <li>Check browser console for the debug logs we added</li>
+        </ol>
+    </div>
+
+    <script>
+        const API_URL = 'https://dashboard-backend-nine-phi.vercel.app';
+        let testResults = {
+            login: false,
+            projectCreated: false,
+            projectId: null,
+            tasksCreated: false,
+            taskCount: 0
+        };
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const resultsDiv = document.getElementById('results');
+            const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            resultsDiv.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('testStatus');
+            statusDiv.className = `step ${type}`;
+            statusDiv.innerHTML = `<h4>${message}</h4>`;
+        }
+
+        async function step1() {
+            try {
+                log('🔐 Step 1: Login & Create Project');
+                updateStatus('Running Step 1...', 'info');
+                
+                // Login
+                log('Logging in...');
+                const loginResponse = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'admin@dashboard.com',
+                        password: 'H2@@3/**/'
+                    }),
+                });
+                
+                if (!loginResponse.ok) {
+                    throw new Error(`Login failed: ${loginResponse.status}`);
+                }
+                
+                const loginData = await loginResponse.json();
+                testResults.login = true;
+                log('Login successful', 'success');
+                
+                // Create project with tasks
+                log('Creating project with tasks...');
+                const projectData = {
+                    name: `ProjectSummary Test ${Date.now()}`,
+                    description: 'Testing the ProjectSummary fix',
+                    startDate: '2025-06-13',
+                    endDate: '2025-08-13',
+                    category: 'Bug Fix Testing',
+                    priority: 'high',
+                    tasks: [
+                        {
+                            name: 'ProjectSummary Test Task 1',
+                            description: 'This task should appear in ProjectSummary',
+                            assignee: 'Test User 1',
+                            dueDate: '2025-07-01',
+                            priority: 'medium'
+                        },
+                        {
+                            name: 'ProjectSummary Test Task 2',
+                            description: 'This task should also appear in ProjectSummary',
+                            assignee: 'Test User 2',
+                            dueDate: '2025-07-15',
+                            priority: 'high'
+                        }
+                    ]
+                };
+                
+                const projectResponse = await fetch(`${API_URL}/projects`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${loginData.token}`
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(projectData),
+                });
+                
+                if (!projectResponse.ok) {
+                    throw new Error(`Project creation failed: ${projectResponse.status}`);
+                }
+                
+                const project = await projectResponse.json();
+                testResults.projectCreated = true;
+                testResults.projectId = project.id;
+                log(`Project created: ${project.id}`, 'success');
+                
+                // Verify tasks were created
+                const tasksResponse = await fetch(`${API_URL}/projects/${project.id}/tasks`, {
+                    headers: { 'Authorization': `Bearer ${loginData.token}` },
+                    credentials: 'include'
+                });
+                
+                if (!tasksResponse.ok) {
+                    throw new Error(`Task fetching failed: ${tasksResponse.status}`);
+                }
+                
+                const tasks = await tasksResponse.json();
+                testResults.tasksCreated = tasks.length > 0;
+                testResults.taskCount = tasks.length;
+                
+                if (tasks.length === 2) {
+                    log(`Tasks created successfully: ${tasks.length} tasks`, 'success');
+                    updateStatus('Step 1 Complete ✅', 'success');
+                } else {
+                    log(`Unexpected task count: ${tasks.length}`, 'warning');
+                    updateStatus('Step 1 Complete with warnings ⚠️', 'warning');
+                }
+                
+            } catch (error) {
+                log(`Step 1 failed: ${error.message}`, 'error');
+                updateStatus('Step 1 Failed ❌', 'error');
+            }
+        }
+
+        async function step2() {
+            if (!testResults.projectCreated) {
+                log('Please run Step 1 first', 'error');
+                return;
+            }
+            
+            try {
+                log('🖥️ Step 2: Verify Frontend Task Display');
+                updateStatus('Running Step 2...', 'info');
+                
+                log('Opening frontend for manual verification...');
+                log('Project ID to test: ' + testResults.projectId);
+                log('Expected task count: ' + testResults.taskCount);
+                
+                // Instructions for manual testing
+                log('MANUAL TESTING REQUIRED:', 'warning');
+                log('1. Open http://localhost:5174 in a new tab');
+                log('2. Login with admin@dashboard.com / H2@@3/**/');
+                log('3. Look for the project: "ProjectSummary Test [timestamp]"');
+                log('4. Click on the project to select it');
+                log('5. Check if ProjectSummary shows task information');
+                log('6. Open browser console and look for debug logs');
+                
+                // Open the frontend
+                window.open('http://localhost:5174', '_blank');
+                
+                updateStatus('Step 2: Manual testing required - check frontend', 'info');
+                
+            } catch (error) {
+                log(`Step 2 failed: ${error.message}`, 'error');
+                updateStatus('Step 2 Failed ❌', 'error');
+            }
+        }
+
+        async function step3() {
+            try {
+                log('🎯 Step 3: Test ProjectSummary Component');
+                updateStatus('Running Step 3...', 'info');
+                
+                log('Expected behavior after our fix:');
+                log('1. ProjectSummary should clear tasks when switching projects');
+                log('2. Console should show: "ProjectSummary for [project]: received X tasks"');
+                log('3. Task count should show "X of Y tasks completed" or "No tasks yet"');
+                log('4. Team members should show "X assignees" or "No assignees yet"');
+                log('5. Charts should display task data or show "No data yet"');
+                
+                log('Check the browser console for debug output', 'warning');
+                log('The ProjectSummary component now logs task data on every render', 'info');
+                
+                updateStatus('Step 3: Check console logs and UI behavior', 'success');
+                
+            } catch (error) {
+                log(`Step 3 failed: ${error.message}`, 'error');
+                updateStatus('Step 3 Failed ❌', 'error');
+            }
+        }
+
+        // Auto-log initial state
+        window.onload = () => {
+            log('ProjectSummary Fix Verification Tool Ready');
+            log('Follow the steps above to test the fix');
+            log('Frontend should be running on: http://localhost:5174');
+        };
+    </script>
+</body>
+</html>

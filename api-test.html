@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .loading { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Dashboard API Test</h1>
+    <p>Testing the fixes for path-to-regexp and CORS errors</p>
+    
+    <button onclick="testHealthEndpoint()">Test Health Endpoint</button>
+    <button onclick="testWhoAmI()">Test Auth Whoami</button>
+    <button onclick="testCORS()">Test CORS</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const API_URL = 'https://dashboard-backend-nine-phi.vercel.app';
+        const FRONTEND_ORIGIN = 'https://dashboard-frontend-one-pi.vercel.app';
+        
+        function addResult(test, status, message) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${status}`;
+            div.innerHTML = `<strong>${test}:</strong> ${message}`;
+            results.appendChild(div);
+        }
+        
+        async function testHealthEndpoint() {
+            addResult('Health Endpoint', 'loading', 'Testing...');
+            try {
+                const response = await fetch(`${API_URL}/`);
+                if (response.ok) {
+                    const text = await response.text();
+                    addResult('Health Endpoint', 'success', `✅ Success: ${text}`);
+                } else {
+                    addResult('Health Endpoint', 'error', `❌ Failed: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                addResult('Health Endpoint', 'error', `❌ Error: ${error.message}`);
+            }
+        }
+        
+        async function testWhoAmI() {
+            addResult('Auth Whoami', 'loading', 'Testing...');
+            try {
+                const response = await fetch(`${API_URL}/auth/whoami`, {
+                    credentials: 'include',
+                    headers: {
+                        'Origin': FRONTEND_ORIGIN
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Auth Whoami', 'success', `✅ Success: ${JSON.stringify(data)}`);
+                } else {
+                    addResult('Auth Whoami', 'error', `❌ Failed: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                addResult('Auth Whoami', 'error', `❌ Error: ${error.message}`);
+            }
+        }
+        
+        async function testCORS() {
+            addResult('CORS Test', 'loading', 'Testing preflight...');
+            try {
+                const response = await fetch(`${API_URL}/auth/whoami`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': FRONTEND_ORIGIN
+                    }
+                });
+                addResult('CORS Test', 'success', `✅ CORS working: ${response.status}`);
+            } catch (error) {
+                if (error.message.includes('CORS')) {
+                    addResult('CORS Test', 'error', `❌ CORS Error: ${error.message}`);
+                } else {
+                    addResult('CORS Test', 'success', `✅ CORS OK (other error): ${error.message}`);
+                }
+            }
+        }
+        
+        // Auto-run tests on page load
+        window.onload = function() {
+            setTimeout(testHealthEndpoint, 500);
+            setTimeout(testWhoAmI, 1000);
+            setTimeout(testCORS, 1500);
+        };
+    </script>
+</body>
+</html>

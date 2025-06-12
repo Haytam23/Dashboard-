@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Authentication Debug</title>    <style>
+        body { font-family: Arial, sans-serif; margin: 10px; padding: 10px; background: #1a1a1a; color: white; }
+        .container { max-width: 100%; margin: 0 auto; }
+        .section { margin: 15px 0; padding: 10px; border: 1px solid #333; border-radius: 8px; background: #2a2a2a; }
+        button { background: #0066cc; color: white; padding: 12px 16px; border: none; border-radius: 6px; margin: 5px; cursor: pointer; font-size: 16px; min-width: 120px; }
+        button:hover { background: #0052a3; }
+        button:active { background: #003d7a; }
+        .success { color: #4CAF50; font-weight: bold; }
+        .error { color: #f44336; font-weight: bold; }
+        .info { color: #2196F3; }
+        .warning { color: #ff9800; font-weight: bold; }
+        textarea { width: 100%; height: 200px; background: #2a2a2a; color: white; border: 1px solid #555; padding: 10px; font-family: monospace; }
+        input { background: #2a2a2a; color: white; border: 1px solid #555; padding: 10px; margin: 5px; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 16px; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 6px; font-weight: bold; }
+        .test-success { background: #2e7d32; color: white; }
+        .test-error { background: #c62828; color: white; }
+        .test-warning { background: #f57c00; color: white; }
+        h1, h2 { margin-top: 10px; margin-bottom: 10px; }
+        .status-indicator { font-size: 24px; margin-right: 8px; }
+        .big-button { font-size: 18px; padding: 15px 20px; margin: 10px 5px; }
+        @media (max-width: 600px) {
+            body { margin: 5px; padding: 5px; }
+            .section { margin: 10px 0; padding: 8px; }
+            button { padding: 14px 18px; font-size: 18px; margin: 8px 0; width: 100%; }
+            input { font-size: 18px; padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Dashboard Authentication Debug Tool</h1>
+        
+        <div class="section">
+            <h2>🌐 Browser Detection</h2>
+            <div id="browserInfo"></div>
+        </div>        <div class="section">
+            <h2>🚀 Quick Safari Test</h2>
+            <button class="big-button" onclick="runFullSafariTest()">🍎 Run Full Safari Test</button>
+            <div id="safariTestResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>🔑 Authentication Test</h2>
+            <div>
+                <input type="email" id="email" placeholder="Email" value="admin@dashboard.com">
+                <input type="password" id="password" placeholder="Password" value="H2@@3/**//">
+                <button onclick="testLogin()">🔐 Test Login</button>
+                <button onclick="testWhoami()">👤 Test Whoami</button>
+                <button onclick="testLogout()">🚪 Test Logout</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🍪 Cookie Information</h2>
+            <button onclick="checkCookies()">Check Cookies</button>
+            <div id="cookieInfo"></div>
+        </div>
+
+        <div class="section">
+            <h2>📱 Device Information</h2>
+            <div id="deviceInfo"></div>
+        </div>
+
+        <div class="section">
+            <h2>📝 Debug Log</h2>
+            <button onclick="clearLog()">Clear Log</button>
+            <textarea id="debugLog" readonly></textarea>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://dashboard-backend-nine-phi.vercel.app';
+        const log = document.getElementById('debugLog');
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            log.value += logEntry;
+            log.scrollTop = log.scrollHeight;
+            console.log(`${type}:`, message);
+        }
+
+        function clearLog() {
+            log.value = '';
+        }
+
+        // Browser Detection
+        function detectBrowser() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent) && !/android/.test(userAgent);
+            const isiOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent);
+            const isChrome = /chrome/.test(userAgent);
+            const isFirefox = /firefox/.test(userAgent);
+            
+            return {
+                userAgent: navigator.userAgent,
+                isSafari,
+                isiOSSafari,
+                isChrome,
+                isFirefox,
+                cookiesEnabled: navigator.cookieEnabled
+            };
+        }
+
+        // Display browser info
+        function displayBrowserInfo() {
+            const browser = detectBrowser();
+            const info = document.getElementById('browserInfo');
+            info.innerHTML = `
+                <p><strong>User Agent:</strong> ${browser.userAgent}</p>
+                <p><strong>Safari:</strong> <span class="${browser.isSafari ? 'success' : 'error'}">${browser.isSafari}</span></p>
+                <p><strong>iOS Safari:</strong> <span class="${browser.isiOSSafari ? 'success' : 'error'}">${browser.isiOSSafari}</span></p>
+                <p><strong>Chrome:</strong> <span class="${browser.isChrome ? 'success' : 'error'}">${browser.isChrome}</span></p>
+                <p><strong>Firefox:</strong> <span class="${browser.isFirefox ? 'success' : 'error'}">${browser.isFirefox}</span></p>
+                <p><strong>Cookies Enabled:</strong> <span class="${browser.cookiesEnabled ? 'success' : 'error'}">${browser.cookiesEnabled}</span></p>
+            `;
+        }
+
+        // Device info
+        function displayDeviceInfo() {
+            const info = document.getElementById('deviceInfo');
+            info.innerHTML = `
+                <p><strong>Screen:</strong> ${screen.width}x${screen.height}</p>
+                <p><strong>Viewport:</strong> ${window.innerWidth}x${window.innerHeight}</p>
+                <p><strong>Device Pixel Ratio:</strong> ${window.devicePixelRatio}</p>
+                <p><strong>Touch Support:</strong> ${'ontouchstart' in window}</p>
+                <p><strong>Online:</strong> ${navigator.onLine}</p>
+                <p><strong>Language:</strong> ${navigator.language}</p>
+            `;
+        }
+
+        // Test login
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            addLog(`Attempting login with email: ${email}`);
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+
+                addLog(`Login response status: ${response.status}`);
+                addLog(`Login response headers: ${JSON.stringify([...response.headers.entries()])}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`Login successful: ${JSON.stringify(data)}`, 'success');
+                    
+                    // Check if cookies were set
+                    setTimeout(() => {
+                        checkCookies();
+                    }, 100);
+                } else {
+                    const error = await response.text();
+                    addLog(`Login failed: ${error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`Login error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test whoami
+        async function testWhoami() {
+            addLog('Testing whoami endpoint...');
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/whoami`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Origin': window.location.origin
+                    }
+                });
+
+                addLog(`Whoami response status: ${response.status}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`Whoami successful: ${JSON.stringify(data)}`, 'success');
+                } else {
+                    addLog(`Whoami failed: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                addLog(`Whoami error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test logout
+        async function testLogout() {
+            addLog('Testing logout...');
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Origin': window.location.origin
+                    }
+                });
+
+                if (response.ok) {
+                    addLog('Logout successful', 'success');
+                    checkCookies();
+                } else {
+                    addLog(`Logout failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                addLog(`Logout error: ${error.message}`, 'error');
+            }
+        }
+
+        // Check cookies
+        function checkCookies() {
+            const cookies = document.cookie;
+            const info = document.getElementById('cookieInfo');
+            
+            addLog(`Current cookies: ${cookies || 'No cookies found'}`);
+            
+            info.innerHTML = `
+                <p><strong>Document.cookie:</strong> ${cookies || 'No cookies'}</p>
+                <p><strong>Cookie count:</strong> ${cookies ? cookies.split(';').length : 0}</p>
+                <p><strong>Note:</strong> HttpOnly cookies won't appear in document.cookie</p>
+            `;
+        }        // Run full Safari test
+        async function runFullSafariTest() {
+            const resultDiv = document.getElementById('safariTestResult');
+            resultDiv.innerHTML = '<div class="test-result test-warning">🧪 Running Safari test...</div>';
+            
+            let testResults = [];
+            
+            try {
+                // 1. Test browser detection
+                const browser = detectBrowser();
+                if (browser.isiOSSafari) {
+                    testResults.push('✅ iOS Safari detected correctly');
+                } else if (browser.isSafari) {
+                    testResults.push('✅ Safari detected correctly');
+                } else {
+                    testResults.push('ℹ️ Not Safari - test may not be relevant');
+                }
+                
+                // 2. Test login
+                addLog('🧪 SAFARI TEST: Starting login test...');
+                const loginResponse = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': window.location.origin
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ 
+                        email: 'admin@dashboard.com', 
+                        password: 'H2@@3/**/' 
+                    })
+                });
+
+                if (loginResponse.ok) {
+                    testResults.push('✅ Login successful');
+                    
+                    // Set Safari fallback for testing
+                    localStorage.setItem('auth-safari-fallback', 'true');
+                    testResults.push('✅ Safari fallback set in localStorage');
+                    
+                    // Wait a moment
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // 3. Test whoami
+                    const whoamiResponse = await fetch(`${API_URL}/auth/whoami`, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: { 'Origin': window.location.origin }
+                    });
+
+                    if (whoamiResponse.ok) {
+                        testResults.push('✅ Cookie authentication working!');
+                    } else {
+                        testResults.push('⚠️ Cookie auth failed, but fallback should work');
+                    }
+                    
+                    // 4. Test API call (projects)
+                    try {
+                        const projectsResponse = await fetch(`${API_URL}/projects`, {
+                            credentials: 'include',
+                            headers: { 'Origin': window.location.origin }
+                        });
+                        
+                        if (projectsResponse.ok) {
+                            testResults.push('✅ API calls working with cookies');
+                        } else if (projectsResponse.status === 401) {
+                            testResults.push('⚠️ API calls blocked (expected on Safari), but app should handle this gracefully');
+                        }
+                    } catch (error) {
+                        testResults.push('⚠️ API call failed: ' + error.message);
+                    }
+                    
+                } else {
+                    testResults.push('❌ Login failed');
+                }
+                
+            } catch (error) {
+                testResults.push('❌ Test error: ' + error.message);
+                addLog('🧪 SAFARI TEST ERROR: ' + error.message, 'error');
+            }
+            
+            // Display results
+            let resultClass = 'test-success';
+            if (testResults.some(r => r.includes('❌'))) resultClass = 'test-error';
+            else if (testResults.some(r => r.includes('⚠️'))) resultClass = 'test-warning';
+            
+            resultDiv.innerHTML = `
+                <div class="test-result ${resultClass}">
+                    <h3>🧪 Safari Test Results:</h3>
+                    ${testResults.map(r => `<div>${r}</div>`).join('')}
+                    <br>
+                    <strong>Next step:</strong> Try opening the main app: 
+                    <a href="https://dashboard-frontend-one-pi.vercel.app/login" 
+                       style="color: #4CAF50; text-decoration: underline;">
+                       Dashboard Login
+                    </a>
+                </div>
+            `;
+              addLog('🧪 SAFARI TEST COMPLETED: ' + testResults.join(' | '));
+        }
+
+        // Initialize
+        window.onload = function() {
+            displayBrowserInfo();
+            displayDeviceInfo();
+            checkCookies();
+            addLog('Debug tool initialized');
+        };
+    </script>
+</body>
+</html>

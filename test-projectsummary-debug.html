@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProjectSummary Debug Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+        .log { margin: 5px 0; padding: 8px; border-radius: 4px; }
+        .success { background: #1a472a; }
+        .error { background: #7f1d1d; }
+        .info { background: #1e3a8a; }
+        .warning { background: #92400e; }
+        button { padding: 10px 20px; margin: 10px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #1d4ed8; }
+        input { padding: 8px; margin: 5px; width: 300px; }
+        pre { background: #374151; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 ProjectSummary Debug Test</h1>
+    <p>This will test the complete flow from creating a project with tasks to displaying them in ProjectSummary</p>
+    
+    <div>
+        <h3>Step 1: Login</h3>
+        <button onclick="testLogin()">Login as admin</button>
+        <div id="loginStatus"></div>
+    </div>
+
+    <div>
+        <h3>Step 2: Create Project with Tasks</h3>
+        <button onclick="createTestProject()">Create Test Project</button>
+        <div id="createStatus"></div>
+        <input type="text" id="projectId" placeholder="Project ID will appear here" readonly>
+    </div>
+
+    <div>
+        <h3>Step 3: Fetch Project Tasks</h3>
+        <button onclick="fetchProjectTasks()">Fetch Tasks</button>
+        <div id="fetchStatus"></div>
+        <pre id="tasksData"></pre>
+    </div>
+
+    <div>
+        <h3>Step 4: Simulate ProjectSummary Component</h3>
+        <button onclick="simulateProjectSummary()">Simulate ProjectSummary</button>
+        <div id="summaryStatus"></div>
+        <pre id="summaryData"></pre>
+    </div>
+
+    <div id="logs"></div>
+
+    <script>
+        const API_URL = 'https://dashboard-backend-omega-seven.vercel.app';
+        let authToken = null;
+        let currentProjectId = null;
+        let currentTasks = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.createElement('div');
+            logDiv.className = `log ${type}`;
+            logDiv.innerHTML = `[${timestamp}] ${message}`;
+            document.getElementById('logs').appendChild(logDiv);
+            document.getElementById('logs').scrollTop = document.getElementById('logs').scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function showStatus(elementId, message, type = 'info') {
+            const el = document.getElementById(elementId);
+            el.className = type;
+            el.textContent = message;
+        }
+
+        function getAuthHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+            };
+        }
+
+        async function testLogin() {
+            try {
+                log('🔐 Attempting login...');
+                showStatus('loginStatus', 'Logging in...', 'info');
+                
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'admin@dashboard.com',
+                        password: 'H2@@3/**/'
+                    }),
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                authToken = result.token;
+                
+                log('✅ Login successful', 'success');
+                showStatus('loginStatus', 'Logged in successfully', 'success');
+                
+            } catch (error) {
+                log(`❌ Login failed: ${error.message}`, 'error');
+                showStatus('loginStatus', `Login failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function createTestProject() {
+            try {
+                log('🏗️ Creating test project with tasks...');
+                showStatus('createStatus', 'Creating project...', 'info');
+                
+                const projectData = {
+                    name: 'ProjectSummary Debug Test Project',
+                    description: 'Testing if tasks appear in ProjectSummary component',
+                    startDate: '2025-06-13',
+                    endDate: '2025-08-13',
+                    category: 'Debug Testing',
+                    priority: 'high',
+                    tasks: [
+                        {
+                            name: 'Debug Task 1',
+                            description: 'First task to test ProjectSummary display',
+                            assignee: 'Debug User 1',
+                            dueDate: '2025-07-01',
+                            priority: 'medium'
+                        },
+                        {
+                            name: 'Debug Task 2', 
+                            description: 'Second task to test ProjectSummary display',
+                            assignee: 'Debug User 2',
+                            dueDate: '2025-07-15',
+                            priority: 'high'
+                        }
+                    ]
+                };
+                
+                log(`Sending project data: ${JSON.stringify(projectData, null, 2)}`);
+                
+                const response = await fetch(`${API_URL}/projects`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    credentials: 'include',
+                    body: JSON.stringify(projectData),
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(`HTTP ${response.status}: ${error.error || response.statusText}`);
+                }
+                
+                const result = await response.json();
+                currentProjectId = result.id;
+                
+                log(`✅ Project created successfully: ${JSON.stringify(result)}`, 'success');
+                document.getElementById('projectId').value = result.id;
+                showStatus('createStatus', `Project created successfully! ID: ${result.id}`, 'success');
+                
+            } catch (error) {
+                log(`❌ Project creation failed: ${error.message}`, 'error');
+                showStatus('createStatus', `Project creation failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function fetchProjectTasks() {
+            const projectId = document.getElementById('projectId').value || currentProjectId;
+            
+            if (!projectId) {
+                showStatus('fetchStatus', 'Please create a project first', 'error');
+                return;
+            }
+            
+            try {
+                log(`🔍 Fetching tasks for project: ${projectId}`);
+                showStatus('fetchStatus', 'Fetching tasks...', 'info');
+                
+                const response = await fetch(`${API_URL}/projects/${projectId}/tasks`, {
+                    headers: getAuthHeaders(),
+                    credentials: 'include',
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const tasks = await response.json();
+                currentTasks = tasks;
+                
+                log(`Tasks response: ${JSON.stringify(tasks, null, 2)}`);
+                document.getElementById('tasksData').textContent = JSON.stringify(tasks, null, 2);
+                
+                if (tasks.length === 0) {
+                    log('❌ NO TASKS FOUND - ProjectSummary will show empty!', 'error');
+                    showStatus('fetchStatus', 'NO TASKS FOUND!', 'error');
+                } else {
+                    log(`✅ Found ${tasks.length} tasks:`, 'success');
+                    tasks.forEach((task, index) => {
+                        log(`  Task ${index + 1}: "${task.name}" (Status: ${task.status})`, 'success');
+                    });
+                    showStatus('fetchStatus', `Successfully fetched ${tasks.length} tasks`, 'success');
+                }
+                
+            } catch (error) {
+                log(`❌ Task fetching failed: ${error.message}`, 'error');
+                showStatus('fetchStatus', `Task fetching failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function simulateProjectSummary() {
+            if (!currentProjectId || currentTasks.length === 0) {
+                showStatus('summaryStatus', 'Please create project and fetch tasks first', 'error');
+                return;
+            }
+
+            try {
+                log('🎯 Simulating ProjectSummary component logic...');
+                showStatus('summaryStatus', 'Simulating ProjectSummary...', 'info');
+                
+                // Simulate what ProjectSummary component does
+                const totalTasks = currentTasks.length;
+                const completedTasks = currentTasks.filter(t => t.status === 'completed').length;
+                const inProgressTasks = totalTasks - completedTasks;
+                
+                const assigneeStats = currentTasks.reduce((acc, task) => {
+                    acc[task.assignee] = (acc[task.assignee] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const statusData = [
+                    { name: 'Completed', value: completedTasks },
+                    { name: 'In Progress', value: inProgressTasks },
+                ];
+
+                const summaryData = {
+                    projectId: currentProjectId,
+                    totalTasks,
+                    completedTasks,
+                    inProgressTasks,
+                    assigneeStats,
+                    statusData,
+                    uniqueAssignees: Object.keys(assigneeStats).length
+                };
+
+                log(`✅ ProjectSummary simulation results:`, 'success');
+                log(`   Total Tasks: ${totalTasks}`, 'success');
+                log(`   Completed: ${completedTasks}`, 'success');
+                log(`   In Progress: ${inProgressTasks}`, 'success');
+                log(`   Unique Assignees: ${Object.keys(assigneeStats).length}`, 'success');
+                
+                document.getElementById('summaryData').textContent = JSON.stringify(summaryData, null, 2);
+                showStatus('summaryStatus', `ProjectSummary would show ${totalTasks} tasks`, 'success');
+                
+            } catch (error) {
+                log(`❌ ProjectSummary simulation failed: ${error.message}`, 'error');
+                showStatus('summaryStatus', `Simulation failed: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

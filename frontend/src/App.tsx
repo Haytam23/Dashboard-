@@ -64,12 +64,16 @@ function App() {
       }
     }
     loadProjects();
-  }, [toast]);
-  // 2️⃣ Whenever a project is selected, fetch its tasks
+  }, [toast]);  // 2️⃣ Whenever a project is selected, fetch its tasks
   useEffect(() => {
-    if (!selectedProjectId) return;
+    if (!selectedProjectId) {
+      setTasks([]); // Clear tasks when no project is selected
+      return;
+    }
 
     setLoadingTasks(true);
+    setTasks([]); // Clear tasks immediately when switching projects
+    
     async function loadTasks() {
       try {
         const t = await fetchTasksByProjectId(selectedProjectId as string);
@@ -219,9 +223,7 @@ async function handleDeleteProject(projectId: string) {
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Projects</span>
-          </Button>
-
-          <ProjectSummary
+          </Button>          <ProjectSummary
             project={selectedProject}
             tasks={tasks}
             progress={projectProgress}

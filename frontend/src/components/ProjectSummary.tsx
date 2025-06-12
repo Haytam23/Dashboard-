@@ -43,7 +43,9 @@ export function ProjectSummary({ project, tasks, progress }: ProjectSummaryProps
 
   // Get unique assignees and their task counts
   const assigneeStats = tasks.reduce((acc, task) => {
-    acc[task.assignee] = (acc[task.assignee] || 0) + 1;
+    if (task.assignee) {
+      acc[task.assignee] = (acc[task.assignee] || 0) + 1;
+    }
     return acc;
   }, {} as Record<string, number>);
 
@@ -117,12 +119,11 @@ export function ProjectSummary({ project, tasks, progress }: ProjectSummaryProps
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
+              <div className="space-y-2">                <div className="flex items-center gap-2 text-sm">
                   <LayoutList className="h-4 w-4 text-[hsl(var(--neon-green))]" />
                   <span className="text-muted-foreground">Task Completion:</span>
                   <span>
-                    {completedTasks} of {totalTasks} tasks completed
+                    {totalTasks === 0 ? 'No tasks yet' : `${completedTasks} of ${totalTasks} tasks completed`}
                   </span>
                 </div>
                 
@@ -131,11 +132,12 @@ export function ProjectSummary({ project, tasks, progress }: ProjectSummaryProps
                   <span className="text-muted-foreground">Progress:</span>
                   <span>{progress}% complete</span>
                 </div>
-                
-                <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4 text-[hsl(var(--neon-blue))]" />
                   <span className="text-muted-foreground">Team Members:</span>
-                  <span>{Object.keys(assigneeStats).length} assignees</span>
+                  <span>
+                    {Object.keys(assigneeStats).length === 0 ? 'No assignees yet' : `${Object.keys(assigneeStats).length} assignees`}
+                  </span>
                 </div>
               </div>
             </div>
