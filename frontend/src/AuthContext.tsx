@@ -77,6 +77,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   isAuthed: boolean;
+  isLoading: boolean; // Add loading state to interface
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -85,6 +86,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthed, setIsAuthed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
   const navigate = useNavigate();
   const API = import.meta.env.VITE_API_URL;
 
@@ -98,6 +100,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthed(res.ok);
       } catch {
         setIsAuthed(false);
+      } finally {
+        setIsLoading(false); // Always set loading to false
       }
     };
     checkAuth();
@@ -105,19 +109,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Perform login: server sets HttpOnly cookie
   const login = async (email: string, password: string) => {
-  const res = await fetch(`${API}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',    // accept + send cookies
-    body: JSON.stringify({ email, password }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || 'Login failed');
-  }
-  setIsAuthed(true);
-//   navigate('/', { replace: true });
-};
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
+    });
+    
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || 'Login failed');
+    }
+    
+    // Immediately set auth state and wait a moment for cookie to be available
+    setIsAuthed(true);
+    
+    // Small delay to ensure cookie is properly set before navigation
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Verify auth state with server before proceeding
+    try {
+      const verifyRes = await fetch(`${API}/auth/whoami`, {
+        credentials: 'include',
+      });
+      if (!verifyRes.ok) {
+        console.warn('Auth verification failed after login');
+        setIsAuthed(false);
+        throw new Error('Authentication verification failed');
+      }
+      console.log('✅ Login and auth verification successful');
+    } catch (error) {
+      console.error('Auth verification error:', error);
+      setIsAuthed(false);
+      throw error;
+    }
+  };
   // Perform logout: server clears the cookie
   const logout = async () => {
     await fetch(`${API}/auth/logout`, {
@@ -127,9 +153,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthed(false);
     navigate('/login', { replace: true });
   };
-
   return (
-    <AuthContext.Provider value={{ isAuthed, login, logout }}>
+    <AuthContext.Provider value={{ isAuthed, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -386,35 +386,25 @@ export function LoginPage() {
   const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false) // Fix: allow updating loading state
   const [errors] = useState<FormErrors>({}) // Remove setErrors if not used
   const [error, setError] = useState<string>()
 
   const nav = useNavigate()
 
-  //   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  //     e.preventDefault();
-
-  //     if (!validateForm()) return;
-
-  //     setIsLoading(true);
-  //     try {
-  //       await login(email, password);
-  //       nav('/');
-  //     } catch (error) {
-  //       console.error('Login failed:', error);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(undefined)
+    setIsLoading(true) // Set loading to true during login
+    
     try {
       await login(email, password)
+      // Only navigate after successful login and auth verification
       nav("/dashboard", { replace: true })
     } catch (err: any) {
       setError(err.message)
+    } finally {
+      setIsLoading(false) // Always reset loading state
     }
   }
 
