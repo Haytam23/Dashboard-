@@ -96,10 +96,9 @@ dotenv.config(); // Loads environment variables from .env file
 const app = express(); // Initialize Express app
 
 const allowedOrigins = [
-  'http://localhost:5173', // Your local Vite dev URL
-  // CRUCIAL: This must be the EXACT URL of your deployed frontend.
-  // Copy it from your browser's console using `window.location.origin` if unsure.
-  'https://dashboard-lafarge-frontend.vercel.app' // This should be the exact value from window.location.origin
+  'http://localhost:5173', // Local development
+  'https://dashboard-lafarge-frontend.vercel.app', // Keep this for future deployments
+  'https://dashboard-lafarge-frontend-mhrtqno7f.vercel.app' // Add your actual frontend URL
 ]
 
 // EXPLICIT OPTIONS HANDLER - MUST BE FIRST
