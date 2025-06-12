@@ -104,25 +104,26 @@ const allowedOrigins = [
 // CORS Middleware - MUST BE APPLIED FIRST
 app.use(cors({
   origin: function (origin, callback) {
-    // Log the incoming origin for debugging in Vercel logs
     console.log(`CORS check: Request Origin: ${origin}`); 
 
-    // Allow requests with no origin (e.g., from Postman, curl, or same-origin requests)
-    if (!origin) return callback(null, true);
+    if (!origin) { // Allow requests with no origin (e.g., direct browser access, curl)
+      console.log("CORS: Origin undefined, allowing.");
+      return callback(null, true);
+    }
 
-    // Check if the requesting origin is in our allowed list
-    if (allowedOrigins.indexOf(origin) === -1) {
+    if (allowedOrigins.includes(origin)) { // Use .includes() for clarity
+      console.log(`CORS: Origin '${origin}' is allowed.`);
+      return callback(null, true);
+    } else {
       const msg = `CORS Error: Origin '${origin}' is not allowed by the backend's CORS policy. Allowed: ${allowedOrigins.join(', ')}.`;
       console.error(msg);
       return callback(new Error(msg), false);
     }
-    return callback(null, true);
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Explicitly allow all common methods
-  credentials: true, // Allow cookies to be sent across origins
-  exposedHeaders: ['Set-Cookie'] // If your backend sets cookies, expose this header
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Explicitly list all methods, especially OPTIONS
+  credentials: true, // Allow cookies/credentials
+  exposedHeaders: ['Set-Cookie'] // Important if you're setting cookies
 }));
-
 // Other general middleware
 app.use(cookieParser());
 app.use(express.json());
