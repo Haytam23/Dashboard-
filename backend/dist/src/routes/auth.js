@@ -144,14 +144,13 @@ exports.authRouter.post('/login', (req, res) => __awaiter(void 0, void 0, void 0
         console.log('[LOGIN] Password matches, creating JWT token...');
         const token = jsonwebtoken_1.default.sign({ sub: user.id, email: user.email }, JWT_SECRET, {
             expiresIn: '8h',
-        });
-        // Set it as a Secure, HttpOnly cookie
+        }); // Set it as a Secure, HttpOnly cookie
         console.log('[LOGIN] Setting cookie and sending success response');
         res
             .cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: true, // Always true for cross-origin cookies
+            sameSite: 'none', // Required for cross-origin cookies
             maxAge: 1000 * 60 * 60 * 8, // 8 hours
         })
             .json({ success: true });
@@ -166,8 +165,7 @@ exports.authRouter.post('/login', (req, res) => __awaiter(void 0, void 0, void 0
  * GET /auth/whoami
  * Checks the cookie, returns 200 if valid.
  */
-exports.authRouter.get('/whoami', 
-//   requireAuth, // your middleware should read req.cookies.token
+exports.authRouter.get('/whoami', auth_1.requireAuth, // Now this will properly read req.cookies.token
 (_req, res) => {
     res.json({ success: true });
 });
@@ -179,8 +177,8 @@ exports.authRouter.post('/logout', (_req, res) => {
     res
         .clearCookie('token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true, // Always true for cross-origin cookies
+        sameSite: 'none', // Required for cross-origin cookies
     })
         .json({ success: true });
 });

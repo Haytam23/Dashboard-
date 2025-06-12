@@ -121,15 +121,13 @@ authRouter.post(
       console.log('[LOGIN] Password matches, creating JWT token...');
       const token = jwt.sign({ sub: user.id, email: user.email }, JWT_SECRET, {
         expiresIn: '8h',
-      });
-
-      // Set it as a Secure, HttpOnly cookie
+      });      // Set it as a Secure, HttpOnly cookie
       console.log('[LOGIN] Setting cookie and sending success response');
       res
         .cookie('token', token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
+          secure: true, // Always true for cross-origin cookies
+          sameSite: 'none', // Required for cross-origin cookies
           maxAge: 1000 * 60 * 60 * 8, // 8 hours
         })
         .json({ success: true });
@@ -147,7 +145,7 @@ authRouter.post(
  */
 authRouter.get(
   '/whoami',
-//   requireAuth, // your middleware should read req.cookies.token
+  requireAuth, // Now this will properly read req.cookies.token
   (_req: Request, res: Response) => {
     res.json({ success: true });
   }
@@ -161,8 +159,8 @@ authRouter.post('/logout', (_req: Request, res: Response) => {
   res
     .clearCookie('token', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true, // Always true for cross-origin cookies
+      sameSite: 'none', // Required for cross-origin cookies
     })
     .json({ success: true });
 });

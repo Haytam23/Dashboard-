@@ -13,18 +13,30 @@ export function requireAuth(
     return next(); // Crucial for preflight requests
   }
 
-  const auth = req.headers.authorization?.split(' ')[1];
+  // First try to get token from cookie (for cookie-based auth)
+  let token = req.cookies?.token;
+  
+  // If no cookie token, try Authorization header (for Bearer token auth)
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
+  }
 
-  if (!auth) {
+  console.log('requireAuth: Cookie token:', req.cookies?.token ? 'Found' : 'Not found');
+  console.log('requireAuth: Auth header:', req.headers.authorization ? 'Found' : 'Not found');
+
+  if (!token) {
     console.warn('requireAuth: No authorization token found, sending 401.');
     res.sendStatus(401);
     return;
   }
 
   try {
-    const decoded = jwt.verify(auth, process.env.JWT_SECRET as string);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
     (req as any).user = decoded;
-    console.log('requireAuth: Token successfully verified for user:', (decoded as any).id);
+    console.log('requireAuth: Token successfully verified for user:', (decoded as any).sub);
     next();
   } catch (error) {
     console.error('requireAuth: Authentication failed during token verification:', error);
