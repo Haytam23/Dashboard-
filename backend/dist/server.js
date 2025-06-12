@@ -25,7 +25,7 @@ const tasks_1 = require("./src/routes/tasks");
 // Import middleware based on your file structure (backend/middleware/)
 const auth_2 = require("./middleware/auth");
 // Import database pool based on your file structure (backend/src/db.ts)
-const db_1 = require("./src/db");
+// import { pool } from './src/db'; // Temporarily disabled for debugging
 dotenv_1.default.config(); // Loads environment variables from .env file
 const app = (0, express_1.default)(); // Initialize Express app
 const allowedOrigins = [
@@ -95,15 +95,16 @@ app.use('*', (req, res) => {
 function init() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            console.log('Attempting to connect to PostgreSQL database...');
+            console.log('Backend initialized successfully without database connection');
+            // Temporarily disabled database connection for debugging
+            // console.log('Attempting to connect to PostgreSQL database...');
             // Only test connection if DATABASE_URL is available
-            if (process.env.DATABASE_URL) {
-                yield db_1.pool.query('SELECT 1;');
-                console.log('PostgreSQL database connected successfully!');
-            }
-            else {
-                console.warn('DATABASE_URL not set - running without database connection');
-            }
+            // if (process.env.DATABASE_URL) {
+            //   await pool.query('SELECT 1;');
+            //   console.log('PostgreSQL database connected successfully!');
+            // } else {
+            //   console.warn('DATABASE_URL not set - running without database connection');
+            // }
         }
         catch (error) {
             console.error('WARNING: Failed to establish database connection during initialization:', error);
