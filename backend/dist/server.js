@@ -32,63 +32,36 @@ const allowedOrigins = [
     'http://localhost:5173', // Local development
     'https://dashboard-frontend-one-pi.vercel.app' // Your actual frontend URL
 ];
-// EXPLICIT OPTIONS HANDLER - MUST BE FIRST
-// This handles preflight requests for ALL routes
-// EXPLICIT OPTIONS HANDLER - MUST BE FIRST
-// This handles preflight requests for ALL routes
-app.options('*', (req, res) => {
-    try {
-        const origin = req.headers.origin;
-        console.log(`OPTIONS preflight request from origin: ${origin}`);
-        console.log(`Allowed origins: ${allowedOrigins.join(', ')}`);
-        // Check if origin is allowed
-        if (!origin || allowedOrigins.includes(origin)) {
-            res.setHeader('Access-Control-Allow-Origin', origin || '*');
-            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie, X-Requested-With, Accept, Origin');
-            res.setHeader('Access-Control-Allow-Credentials', 'true');
-            res.setHeader('Access-Control-Max-Age', '86400'); // Cache preflight for 24 hours
-            console.log(`OPTIONS preflight approved for origin: ${origin}`);
-            res.status(200).end();
-            return;
-        }
-        else {
-            console.log(`OPTIONS preflight REJECTED for origin: ${origin}. Allowed: ${allowedOrigins.join(', ')}`);
-            res.status(403).json({ error: 'Origin not allowed' });
-            return;
-        }
-    }
-    catch (error) {
-        console.error('Error in OPTIONS handler:', error);
-        res.status(500).json({ error: 'Internal server error in OPTIONS handler' });
-        return;
-    }
-});
-// CORS Middleware - APPLIED AFTER OPTIONS HANDLER
+// Simple CORS configuration - let the cors middleware handle everything
 app.use((0, cors_1.default)({
     origin: function (origin, callback) {
         console.log(`CORS check: Request Origin: ${origin}`);
-        if (!origin) { // Allow requests with no origin (e.g., direct browser access, curl)
-            console.log("CORS: Origin undefined, allowing.");
-            return callback(null, true);
-        }
-        if (allowedOrigins.includes(origin)) { // Use .includes() for clarity
+        if (!origin || allowedOrigins.includes(origin)) {
             console.log(`CORS: Origin '${origin}' is allowed.`);
             return callback(null, true);
         }
         else {
-            const msg = `CORS Error: Origin '${origin}' is not allowed by the backend's CORS policy. Allowed: ${allowedOrigins.join(', ')}.`;
+            const msg = `CORS Error: Origin '${origin}' is not allowed.`;
             console.error(msg);
             return callback(new Error(msg), false);
         }
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Explicitly list all methods, especially OPTIONS
-    credentials: true, // Allow cookies/credentials
-    exposedHeaders: ['Set-Cookie'] // Important if you're setting cookies
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true,
+    exposedHeaders: ['Set-Cookie']
 }));
 // Other general middleware
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
+// Error handling middleware for debugging
+app.use((err, req, res, next) => {
+    console.error('Express error:', err);
+    res.status(500).json({
+        error: 'Internal server error',
+        message: err.message,
+        timestamp: new Date().toISOString()
+    });
+});
 // Public Auth Endpoints (No authentication needed for login/register)
 console.log('Setting up basic routes...');
 app.use('/auth', auth_1.authRouter);
@@ -99,7 +72,20 @@ app.use('/tasks', auth_2.requireAuth, tasks_1.taskRouter);
 // Default route for health check or basic message
 // This is the route that should respond to GET /
 app.get('/', (req, res) => {
-    res.send('Project Management Backend API is running!');
+    res.json({
+        message: 'Project Management Backend API is running!',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0'
+    });
+});
+// 404 handler
+app.use('*', (req, res) => {
+    res.status(404).json({
+        error: 'Endpoint not found',
+        path: req.originalUrl,
+        method: req.method,
+        timestamp: new Date().toISOString()
+    });
 });
 // IMPORTANT FOR VERCEL:
 // 1. Remove the app.listen() call. Vercel automatically handles listening.
