@@ -94,29 +94,37 @@ authRouter.post(
   '/login',
   async (req: Request, res: Response): Promise<void> => {
     try {
+      console.log('[LOGIN] Request body:', req.body);
       const { email, password } = req.body as {
         email: string;
         password: string;
       };
+      console.log(`[LOGIN] Attempting login for email: ${email}`);
 
       const user = await findUserByEmail(email);
+      console.log(`[LOGIN] User found:`, user ? 'Yes' : 'No');
       if (!user) {
+        console.log('[LOGIN] No user found, returning 401');
         res.status(401).json({ error: 'Invalid credentials' });
         return;
       }
 
+      console.log('[LOGIN] Comparing password...');
       const match = await bcrypt.compare(password, user.password);
+      console.log(`[LOGIN] Password match:`, match);
       if (!match) {
+        console.log('[LOGIN] Password mismatch, returning 401');
         res.status(401).json({ error: 'Invalid credentials' });
-        return;
-      }
+        return;      }
 
       // Sign a JWT valid for 8 hours
+      console.log('[LOGIN] Password matches, creating JWT token...');
       const token = jwt.sign({ sub: user.id, email: user.email }, JWT_SECRET, {
         expiresIn: '8h',
       });
 
       // Set it as a Secure, HttpOnly cookie
+      console.log('[LOGIN] Setting cookie and sending success response');
       res
         .cookie('token', token, {
           httpOnly: true,
@@ -125,6 +133,7 @@ authRouter.post(
           maxAge: 1000 * 60 * 60 * 8, // 8 hours
         })
         .json({ success: true });
+      console.log('[LOGIN] Login successful for:', email);
     } catch (err) {
       console.error('[LOGIN] Unexpected error:', err);
       res.status(500).json({ error: 'Internal server error' });

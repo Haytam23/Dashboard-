@@ -122,22 +122,31 @@ dotenv_1.default.config();
  */
 exports.authRouter.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log('[LOGIN] Request body:', req.body);
         const { email, password } = req.body;
+        console.log(`[LOGIN] Attempting login for email: ${email}`);
         const user = yield (0, userModel_1.findUserByEmail)(email);
+        console.log(`[LOGIN] User found:`, user ? 'Yes' : 'No');
         if (!user) {
+            console.log('[LOGIN] No user found, returning 401');
             res.status(401).json({ error: 'Invalid credentials' });
             return;
         }
+        console.log('[LOGIN] Comparing password...');
         const match = yield bcrypt_1.default.compare(password, user.password);
+        console.log(`[LOGIN] Password match:`, match);
         if (!match) {
+            console.log('[LOGIN] Password mismatch, returning 401');
             res.status(401).json({ error: 'Invalid credentials' });
             return;
         }
         // Sign a JWT valid for 8 hours
+        console.log('[LOGIN] Password matches, creating JWT token...');
         const token = jsonwebtoken_1.default.sign({ sub: user.id, email: user.email }, JWT_SECRET, {
             expiresIn: '8h',
         });
         // Set it as a Secure, HttpOnly cookie
+        console.log('[LOGIN] Setting cookie and sending success response');
         res
             .cookie('token', token, {
             httpOnly: true,
@@ -146,6 +155,7 @@ exports.authRouter.post('/login', (req, res) => __awaiter(void 0, void 0, void 0
             maxAge: 1000 * 60 * 60 * 8, // 8 hours
         })
             .json({ success: true });
+        console.log('[LOGIN] Login successful for:', email);
     }
     catch (err) {
         console.error('[LOGIN] Unexpected error:', err);
