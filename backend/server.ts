@@ -75,7 +75,6 @@
 // startServer();
 
 
-
 // backend/server.ts
 import express from 'express';
 import cors from 'cors';
@@ -112,7 +111,7 @@ app.options('*', (req: express.Request, res: express.Response) => {
   if (!origin || allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin || '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie, X-Requested-With, Accept, Origin');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Max-Age', '86400'); // Cache preflight for 24 hours
     console.log(`OPTIONS preflight approved for origin: ${origin}`);
