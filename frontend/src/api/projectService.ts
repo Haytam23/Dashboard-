@@ -13,6 +13,16 @@ const BASE = import.meta.env.VITE_API_URL!;
 // then VITE_API_URL should be set to 'https://my-backend-api.vercel.app'
 // and your backend routes should look like '/api/projects' etc.
 
+// Safari detection utility
+const isiOSSafari = () => {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent);
+};
+
+const isSafari = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  return /safari/.test(userAgent) && !/chrome/.test(userAgent) && !/android/.test(userAgent);
+};
+
 function authHeaders() {
   // Since we're using HttpOnly cookies for authentication,
   // we don't need to set Authorization headers
@@ -23,7 +33,18 @@ function authHeaders() {
 
 async function handleResponse(res: Response) {
   if (res.status === 401) {
-    // token missing/invalid → force login
+    // Check if we're on Safari with fallback auth before redirecting
+    const isUsingSafari = isiOSSafari() || isSafari();
+    const hasSafariFallback = localStorage.getItem('auth-safari-fallback');
+    
+    if (isUsingSafari && hasSafariFallback) {
+      console.log('🍎 Safari: API call got 401 but we have fallback auth');
+      // Throw a special error that components can handle gracefully
+      throw new Error('SAFARI_COOKIE_BLOCKED');
+    }
+    
+    // For non-Safari or Safari without fallback, redirect to login
+    console.log('❌ API: 401 unauthorized, redirecting to login');
     window.location.href = '/login';
     return Promise.reject(new Error('Unauthorized'));
   }

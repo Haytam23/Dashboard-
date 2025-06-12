@@ -33,27 +33,38 @@ function App() {
   const [showNewProject, setShowNewProject] = useState(false);
 
   const { toast } = useToast();
-
   // 1️⃣ Fetch projects on mount
   useEffect(() => {
     async function loadProjects() {
       try {
         const pr = await fetchProjects();
         setProjects(pr);
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
-        toast({
-          title: 'Error loading projects',
-          description: 'Could not fetch projects.',
-          variant: 'destructive',
-        });
+        
+        // Handle Safari cookie blocking gracefully
+        if (err.message === 'SAFARI_COOKIE_BLOCKED') {
+          console.log('🍎 Safari: Showing fallback UI due to cookie blocking');
+          toast({
+            title: 'Safari Privacy Mode Detected',
+            description: 'Some features may be limited due to Safari\'s privacy settings. You can still use the app!',
+            variant: 'default',
+          });
+          // Set empty projects array to show empty state instead of error
+          setProjects([]);
+        } else {
+          toast({
+            title: 'Error loading projects',
+            description: 'Could not fetch projects.',
+            variant: 'destructive',
+          });
+        }
       } finally {
         setLoadingProjects(false);
       }
     }
     loadProjects();
   }, [toast]);
-
   // 2️⃣ Whenever a project is selected, fetch its tasks
   useEffect(() => {
     if (!selectedProjectId) return;
@@ -63,13 +74,20 @@ function App() {
       try {
         const t = await fetchTasksByProjectId(selectedProjectId as string);
         setTasks(t);
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
-        toast({
-          title: 'Error loading tasks',
-          description: 'Could not fetch tasks for this project.',
-          variant: 'destructive',
-        });
+        
+        // Handle Safari cookie blocking gracefully
+        if (err.message === 'SAFARI_COOKIE_BLOCKED') {
+          console.log('🍎 Safari: Cannot load tasks due to cookie blocking');
+          setTasks([]); // Show empty tasks instead of error
+        } else {
+          toast({
+            title: 'Error loading tasks',
+            description: 'Could not fetch tasks for this project.',
+            variant: 'destructive',
+          });
+        }
       } finally {
         setLoadingTasks(false);
       }
