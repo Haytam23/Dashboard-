@@ -5,9 +5,10 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 
 // Import routers based on your file structure (backend/src/routes/)
+// ADDING BACK ROUTERS ONE BY ONE TO IDENTIFY THE PROBLEMATIC ONE
+import { authRouter } from './src/routes/auth';
 import { projectRouter } from './src/routes/projects';
 import { taskRouter } from './src/routes/tasks';
-import { authRouter } from './src/routes/auth';
 
 // Import middleware based on your file structure (backend/middleware/)
 import { requireAuth } from './middleware/auth';
@@ -20,7 +21,7 @@ const app = express(); // Initialize Express app
 
 const allowedOrigins = [
   'http://localhost:5173', // Local development
-  'https://dashboard-frontend-haytamraiss23-gmailcoms-projects.vercel.app'
+  'https://dashboard-frontend-one-pi.vercel.app' // Your actual frontend URL
 ]
 
 // EXPLICIT OPTIONS HANDLER - MUST BE FIRST
@@ -84,11 +85,11 @@ app.use(cookieParser());
 app.use(express.json());
 
 // Public Auth Endpoints (No authentication needed for login/register)
-console.log('Mounting /auth router...');
+console.log('Setting up basic routes...');
 app.use('/auth', authRouter);
 
 // Protected Resource Endpoints (require authentication)
-console.log('Mounting protected /projects and /tasks routers with requireAuth...');
+console.log('Basic routes configured...');
 app.use('/projects', requireAuth, projectRouter);
 app.use('/tasks', requireAuth, taskRouter);
 
