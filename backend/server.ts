@@ -20,7 +20,7 @@ const app = express(); // Initialize Express app
 
 const allowedOrigins = [
   'http://localhost:5173', // Local development
-  'https://dashboard-lafarge-frontend.vercel.app', // Keep this for future deployments
+  'https://dashboard-frontend-one-pi.vercel.app', // Keep this for future deployments
 ]
 
 // EXPLICIT OPTIONS HANDLER - MUST BE FIRST
