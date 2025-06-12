@@ -1,17 +1,15 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "dist/server.js",
-  "scripts": {
-    "dev": "ts-node-dev --respawn src/server.ts",
+  "main": "server.js",  "scripts": {
+    "dev": "ts-node-dev --respawn server.ts",
     "build": "tsc",
     "start": "node dist/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
-  "dependencies": {
+  "description": "",  "dependencies": {
     "@fullcalendar/common": "^5.11.5",
     "@fullcalendar/core": "^6.1.17",
     "@fullcalendar/interaction": "^6.1.17",
@@ -21,17 +19,16 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
-    "express": "^5.1.0",
+    "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^7.0.3",
     "pg": "^8.16.0",
     "uuid": "^11.1.0"
-  },
-  "devDependencies": {
+  },  "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.18",
-    "@types/express": "^5.0.2",
+    "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.15.24",
     "@types/nodemailer": "^6.4.17",

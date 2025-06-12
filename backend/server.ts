@@ -25,8 +25,6 @@ const allowedOrigins = [
 
 // EXPLICIT OPTIONS HANDLER - MUST BE FIRST
 // This handles preflight requests for ALL routes
-// EXPLICIT OPTIONS HANDLER - MUST BE FIRST
-// This handles preflight requests for ALL routes
 app.options('*', (req: express.Request, res: express.Response) => {
   try {
     const origin = req.headers.origin;
