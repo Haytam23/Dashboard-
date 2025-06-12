@@ -6,7 +6,7 @@ import { Project, Tasks } from "@/types";
 
 
 // This is correct:
-const BASE = import.meta.env.VITE_API_URL!;
+const BASE = import.meta.env.VITE_API_URL || 'https://dashboard-backend-nine-phi.vercel.app';
 
 // Ensure this is exactly what you want your Vercel frontend to fetch from.
 // Example: If your backend is deployed at https://my-backend-api.vercel.app,
