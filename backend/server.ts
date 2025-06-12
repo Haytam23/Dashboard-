@@ -14,7 +14,7 @@ import { taskRouter } from './src/routes/tasks';
 import { requireAuth } from './middleware/auth';
 
 // Import database pool based on your file structure (backend/src/db.ts)
-// import { pool } from './src/db'; // Temporarily disabled for debugging
+import { pool } from './src/db';
 
 dotenv.config(); // Loads environment variables from .env file
 const app = express(); // Initialize Express app
@@ -92,17 +92,17 @@ app.use('*', (req, res) => {
 
 // Initialize function to handle asynchronous tasks like database connection.
 // This runs once when the serverless function is initialized (on cold start).
-async function init() {  try {
-    console.log('Backend initialized successfully without database connection');
-    // Temporarily disabled database connection for debugging
-    // console.log('Attempting to connect to PostgreSQL database...');
+async function init() {
+  try {
+    console.log('Backend initializing...');
+    console.log('Attempting to connect to PostgreSQL database...');
     // Only test connection if DATABASE_URL is available
-    // if (process.env.DATABASE_URL) {
-    //   await pool.query('SELECT 1;');
-    //   console.log('PostgreSQL database connected successfully!');
-    // } else {
-    //   console.warn('DATABASE_URL not set - running without database connection');
-    // }
+    if (process.env.DATABASE_URL) {
+      await pool.query('SELECT 1;');
+      console.log('PostgreSQL database connected successfully!');
+    } else {
+      console.warn('DATABASE_URL not set - running without database connection');
+    }
   } catch (error) {
     console.error('WARNING: Failed to establish database connection during initialization:', error);
     // In a serverless environment, don't crash the server - just log the warning
