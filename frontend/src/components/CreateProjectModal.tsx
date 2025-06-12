@@ -63,15 +63,14 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
     setValue,
     watch,
     formState: { errors },
-  } = useForm({
-    defaultValues: {
+  } = useForm({    defaultValues: {
       name: "",
       description: "",
       startDate: "",
       endDate: "",
       category: "",
       priority: "medium",
-      tasks: [{ title: "", description: "", assignee: "", dueDate: "", priority: "medium" }],
+      tasks: [{ name: "", description: "", assignee: "", dueDate: "", priority: "medium" }],
     },
   })
 
@@ -93,9 +92,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
     reset()
     onClose()
   }
-
   const addTask = () => {
-    append({ title: "", description: "", assignee: "", dueDate: "", priority: "medium" })
+    append({ name: "", description: "", assignee: "", dueDate: "", priority: "medium" })
   }
 
   const PriorityIcon = priorityConfig[watchedPriority as keyof typeof priorityConfig]?.icon || Clock
@@ -367,24 +365,23 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                               </Button>
                             </div>
 
-                            <div className="space-y-4">
-                              <div className="space-y-2">
+                            <div className="space-y-4">                              <div className="space-y-2">
                                 <Label
-                                  htmlFor={`tasks.${index}.title`}
+                                  htmlFor={`tasks.${index}.name`}
                                   className="text-sm font-medium text-slate-700 dark:text-slate-300"
                                 >
                                   Title *
                                 </Label>
                                 <Input
-                                  id={`tasks.${index}.title`}
+                                  id={`tasks.${index}.name`}
                                   placeholder="Task title"
                                   className="border-slate-300 dark:border-slate-600 focus:border-blue-500 focus:ring-blue-500 bg-white text-black dark:bg-slate-800"
-                                  {...register(`tasks.${index}.title`, { required: "Title is required" })}
+                                  {...register(`tasks.${index}.name`, { required: "Title is required" })}
                                 />
-                                {errors.tasks?.[index]?.title && (
+                                {errors.tasks?.[index]?.name && (
                                   <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
                                     <X className="h-3 w-3" />
-                                    {errors.tasks[index]?.title?.message}
+                                    {errors.tasks[index]?.name?.message}
                                   </p>
                                 )}
                               </div>
