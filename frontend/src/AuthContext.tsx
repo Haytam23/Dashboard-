@@ -89,16 +89,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true); // Add loading state
   const navigate = useNavigate();
   const API = import.meta.env.VITE_API_URL;
-
   // On mount: check session cookie
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // Add timeout to prevent infinite loading
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
         const res = await fetch(`${API}/auth/whoami`, {
           credentials: 'include',
+          signal: controller.signal,
         });
+        
+        clearTimeout(timeoutId);
         setIsAuthed(res.ok);
-      } catch {
+        console.log('Initial auth check result:', res.ok);
+      } catch (error) {
+        console.log('Initial auth check failed:', error);
         setIsAuthed(false);
       } finally {
         setIsLoading(false); // Always set loading to false
