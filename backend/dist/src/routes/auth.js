@@ -63,22 +63,23 @@ if (!JWT_SECRET) {
 const FRONTEND_URL = process.env.FRONTEND_URL;
 // POST /auth/register
 // (Use this once to seed the owner account; you can remove or secure it afterward.)
-// authRouter.post('/register', async (req: Request, res: Response) => {
-//   try {
-//     const { email, password } = req.body as { email: string; password: string };
-//     const existing = await um.findUserByEmail(email);
-//     if (existing) {
-//       res.status(400).json({ error: 'Email already registered' });
-//       return;
-//     }
-//     const hash = await bcrypt.hash(password, 10);
-//     const user = await um.createUser(email, hash);
-//     res.status(201).json({ id: user.id });
-//   } catch (err) {
-//     console.error('Registration failed:', err);
-//     res.status(500).json({ error: 'Registration error' });
-//   }
-// });
+exports.authRouter.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email, password } = req.body;
+        const existing = yield um.findUserByEmail(email);
+        if (existing) {
+            res.status(400).json({ error: 'Email already registered' });
+            return;
+        }
+        const hash = yield bcrypt_1.default.hash(password, 10);
+        const user = yield um.createUser(email, hash);
+        res.status(201).json({ id: user.id });
+    }
+    catch (err) {
+        console.error('Registration failed:', err);
+        res.status(500).json({ error: 'Registration error' });
+    }
+}));
 // POST /auth/login
 // authRouter.post('/login', async (req: Request, res: Response): Promise<void> => {
 //   try {
