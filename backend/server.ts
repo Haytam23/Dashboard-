@@ -20,7 +20,7 @@ const app = express(); // Initialize Express app
 
 const allowedOrigins = [
   'http://localhost:5173', // Local development
-  'https://dashboard-frontend-one-pi.vercel.app', // Keep this for future deployments
+  'https://dashboard-frontend-haytamraiss23-gmailcoms-projects.vercel.app'
 ]
 
 // EXPLICIT OPTIONS HANDLER - MUST BE FIRST
