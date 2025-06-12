@@ -77,7 +77,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
   const { fields, append, remove } = useFieldArray({ control, name: "tasks" })
   const watchedPriority = watch("priority")
   // const watchedTasks = watch("tasks")
-
   const onSubmit = (data: any) => {
     const newProject = {
       id: uuidv4(),
@@ -85,7 +84,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
       tasks: data.tasks.map((task: any) => ({
         ...task,
         id: uuidv4(),
-        status: "pending",
+        status: "in-progress", // ✅ FIX: Use "in-progress" instead of "pending"
       })),
     }
     onCreate(newProject)

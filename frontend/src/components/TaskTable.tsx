@@ -46,9 +46,8 @@ export function TaskTable({
   onToggleStatus,
   onDelete
 }: TaskTableProps) {
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<Set<string>>(
-    new Set(['pending', 'in-progress', 'completed'])
+  const [search, setSearch] = useState('');  const [statusFilter, setStatusFilter] = useState<Set<string>>(
+    new Set(['in-progress', 'completed'])
   );
 
   const filteredTasks = useMemo(() => {

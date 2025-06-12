@@ -86,13 +86,12 @@ export async function createProject(data: {
   startDate: string;
   endDate: string;
   category: string;
-  priority: 'low' | 'medium' | 'high';
-  tasks?: Array<{
+  priority: 'low' | 'medium' | 'high';  tasks?: Array<{
     name: string;
     description?: string;
     assignee?: string;
     dueDate: string;
-    status?: 'pending' | 'in-progress' | 'completed';
+    status?: 'in-progress' | 'completed';
   }>;
 }): Promise<{ id: string }> {
   const res = await fetch(`${BASE}/projects`, {
