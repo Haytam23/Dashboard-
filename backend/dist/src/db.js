@@ -18,7 +18,7 @@ dotenv_1.default.config(); // Ensure dotenv is loaded here too for DB connection
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
     console.error('DATABASE_URL environment variable is not set. Please set it in your .env file or Vercel config.');
-    process.exit(1); // Exit if DB URL is missing
+    throw new Error('DATABASE_URL is required'); // Don't exit process in serverless
 }
 exports.pool = new pg_1.Pool({
     connectionString: connectionString,
@@ -28,6 +28,6 @@ exports.pool = new pg_1.Pool({
 });
 exports.pool.on('error', (err) => {
     console.error('Unexpected error on idle client', err);
-    process.exit(-1); // Exit process with failure
+    // Don't exit process in serverless environment
 });
 console.log('PostgreSQL Pool initialized.');

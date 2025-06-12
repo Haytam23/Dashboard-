@@ -95,14 +95,17 @@ app.use('*', (req, res) => {
 async function init() {
   try {
     console.log('Attempting to connect to PostgreSQL database...');
-    // A simple query to test the connection.
-    await pool.query('SELECT 1;');
-    
-    console.log('PostgreSQL database connected successfully!');
+    // Only test connection if DATABASE_URL is available
+    if (process.env.DATABASE_URL) {
+      await pool.query('SELECT 1;');
+      console.log('PostgreSQL database connected successfully!');
+    } else {
+      console.warn('DATABASE_URL not set - running without database connection');
+    }
   } catch (error) {
-    console.error('FATAL ERROR: Failed to establish database connection during initialization:', error);
-    // In a serverless environment, throwing here won't necessarily stop the 'function'
-    // from being deployed, but it signals a critical issue. Requests relying on the DB will fail.
+    console.error('WARNING: Failed to establish database connection during initialization:', error);
+    // In a serverless environment, don't crash the server - just log the warning
+    console.warn('Server will continue without database functionality');
   }
 }
 
