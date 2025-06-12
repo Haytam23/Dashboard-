@@ -154,6 +154,7 @@ exports.authRouter.post('/login', (req, res) => __awaiter(void 0, void 0, void 0
             httpOnly: true,
             secure: true, // Always true for cross-origin cookies
             sameSite: 'none', // Required for cross-origin cookies
+            domain: '.vercel.app', // Allow cookie to be sent to all vercel.app subdomains
             maxAge: 1000 * 60 * 60 * 8, // 8 hours
         })
             .json({ success: true });
@@ -182,6 +183,7 @@ exports.authRouter.post('/logout', (_req, res) => {
         httpOnly: true,
         secure: true, // Always true for cross-origin cookies
         sameSite: 'none', // Required for cross-origin cookies
+        domain: '.vercel.app', // Match the domain used when setting the cookie
     })
         .json({ success: true });
 });

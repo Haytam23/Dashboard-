@@ -126,12 +126,12 @@ authRouter.post(
       console.log('[LOGIN] Cookie settings: httpOnly=true, secure=true, sameSite=none, maxAge=8h');
       console.log('[LOGIN] Request origin:', req.headers.origin);
       console.log('[LOGIN] User-Agent:', req.headers['user-agent']);
-      
-      res
+        res
         .cookie('token', token, {
           httpOnly: true,
           secure: true, // Always true for cross-origin cookies
           sameSite: 'none', // Required for cross-origin cookies
+          domain: '.vercel.app', // Allow cookie to be sent to all vercel.app subdomains
           maxAge: 1000 * 60 * 60 * 8, // 8 hours
         })
         .json({ success: true });
@@ -165,6 +165,7 @@ authRouter.post('/logout', (_req: Request, res: Response) => {
       httpOnly: true,
       secure: true, // Always true for cross-origin cookies
       sameSite: 'none', // Required for cross-origin cookies
+      domain: '.vercel.app', // Match the domain used when setting the cookie
     })
     .json({ success: true });
 });
