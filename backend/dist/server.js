@@ -29,7 +29,8 @@ dotenv_1.default.config(); // Loads environment variables from .env file
 const app = (0, express_1.default)(); // Initialize Express app
 const allowedOrigins = [
     'http://localhost:5173', // Local development
-    'https://dashboard-frontend-haytamraiss23-gmailcoms-projects.vercel.app'
+    'https://dashboard-frontend-haytamraiss23-gmailcoms-projects.vercel.app',
+    'https://dashboard-frontend-one-pi.vercel.app' // Current frontend deployment
 ];
 // EXPLICIT OPTIONS HANDLER - MUST BE FIRST
 // This handles preflight requests for ALL routes
