@@ -101,13 +101,20 @@ const isAndroidChrome = () => {
   return /android/.test(userAgent) && /chrome/.test(userAgent);
 };
 
+// Chrome desktop detection
+const isChromeDesktop = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  return /chrome/.test(userAgent) && !/mobile/.test(userAgent) && !/android/.test(userAgent);
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthed, setIsAuthed] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Add loading state
   const navigate = useNavigate();
   const API = import.meta.env.VITE_API_URL;
-  // Detect if we're running on Safari (especially iOS Safari)
+  // Detect if we're running on Safari (especially iOS Safari) or Chrome Desktop
   const isUsingSafari = isiOSSafari() || isSafari();
+  const isUsingChromeDesktop = isChromeDesktop();
   const isUsingAndroidChrome = isAndroidChrome();
   
   // On mount: check session cookie
@@ -117,13 +124,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Add timeout to prevent infinite loading
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-        
-        // For Safari, check localStorage fallback FIRST
-        if (isUsingSafari) {
+          // For Safari or Chrome desktop, check localStorage fallback FIRST
+        if (isUsingSafari || isUsingChromeDesktop) {
           const savedToken = localStorage.getItem('auth-token');
-          const savedAuth = localStorage.getItem('auth-safari-fallback');
+          const savedAuth = localStorage.getItem('auth-safari-fallback') || localStorage.getItem('auth-chrome-fallback');
           if (savedAuth && savedToken) {
-            console.log('🍎 Safari: Found fallback auth state and token, setting authenticated');
+            console.log(`🔑 ${isUsingSafari ? 'Safari' : 'Chrome Desktop'}: Found fallback auth state and token, setting authenticated`);
             setIsAuthed(true);
             setIsLoading(false);
             return; // Skip server check if fallback exists
@@ -136,32 +142,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         clearTimeout(timeoutId);
         const authSuccess = res.ok;
-        setIsAuthed(authSuccess);
-          console.log('Initial auth check result:', authSuccess);
+        setIsAuthed(authSuccess);        console.log('Initial auth check result:', authSuccess);
         console.log('Response status:', res.status);
         console.log('Browser detected as Safari:', isUsingSafari);
+        console.log('Browser detected as Chrome Desktop:', isUsingChromeDesktop);
         console.log('Browser detected as Android Chrome:', isUsingAndroidChrome);
         
-        // For Safari, sync with localStorage fallback
-        if (isUsingSafari) {
+        // For Safari or Chrome Desktop, sync with localStorage fallback
+        if (isUsingSafari || isUsingChromeDesktop) {
           if (authSuccess) {
-            localStorage.setItem('auth-safari-fallback', 'true');
-            console.log('🍎 Safari: Cookies working, updated fallback');
+            const fallbackKey = isUsingSafari ? 'auth-safari-fallback' : 'auth-chrome-fallback';
+            localStorage.setItem(fallbackKey, 'true');
+            console.log(`🔑 ${isUsingSafari ? 'Safari' : 'Chrome Desktop'}: Cookies working, updated fallback`);
           } else {
             // Don't remove fallback here - let login set it
-            console.log('🍎 Safari: Cookies not working for initial check');
+            console.log(`🔑 ${isUsingSafari ? 'Safari' : 'Chrome Desktop'}: Cookies not working for initial check`);
           }
-        }      } catch (error) {
+        }} catch (error) {
         console.log('Initial auth check failed:', error);
         console.log('Error type:', error instanceof Error ? error.name : typeof error);
         console.log('User Agent:', navigator.userAgent);
-        
-        // For Safari, check localStorage fallback
-        if (isUsingSafari) {
+          // For Safari or Chrome Desktop, check localStorage fallback
+        if (isUsingSafari || isUsingChromeDesktop) {
           const savedToken = localStorage.getItem('auth-token');
-          const fallbackAuth = localStorage.getItem('auth-safari-fallback');
+          const fallbackAuth = localStorage.getItem('auth-safari-fallback') || localStorage.getItem('auth-chrome-fallback');
           if (fallbackAuth && savedToken) {
-            console.log('🍎 Safari: Using fallback auth state after error');
+            console.log(`🔑 ${isUsingSafari ? 'Safari' : 'Chrome Desktop'}: Using fallback auth state after error`);
             setIsAuthed(true);
             setIsLoading(false);
             return;
@@ -180,16 +186,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
         
-        setIsAuthed(false);
-      } finally {
+        setIsAuthed(false);      } finally {
         setIsLoading(false); // Always set loading to false
       }
     };
-    checkAuth();  }, [API, isUsingSafari]);
+    checkAuth();
+  }, [API, isUsingSafari, isUsingChromeDesktop]);
   
   // Perform login: server sets HttpOnly cookie
   const login = async (email: string, password: string) => {
     console.log('🔍 Login attempt - Safari detected:', isUsingSafari);
+    console.log('🔍 Login attempt - Chrome Desktop detected:', isUsingChromeDesktop);
     console.log('🔍 Login attempt - Android Chrome detected:', isUsingAndroidChrome);
     
     const res = await fetch(`${API}/auth/login`, {
@@ -211,14 +218,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('auth-token', responseBody.token);
       console.log('🔑 Token stored in localStorage');
     }
-    
-    // Immediately set auth state and wait a moment for cookie to be available
+      // Immediately set auth state and wait a moment for cookie to be available
     setIsAuthed(true);
     
-    // For Safari, set fallback immediately since cookies might not work
+    // For Safari or Chrome desktop, set fallback immediately since cookies might not work
     if (isUsingSafari) {
       localStorage.setItem('auth-safari-fallback', 'true');
       console.log('🍎 Safari: Set localStorage fallback');
+    } else if (isUsingChromeDesktop) {
+      localStorage.setItem('auth-chrome-fallback', 'true');
+      console.log('🖥️ Chrome Desktop: Set localStorage fallback');
     }
     
     // Small delay to ensure cookie is properly set before navigation
@@ -229,34 +238,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const verifyRes = await fetch(`${API}/auth/whoami`, {
         credentials: 'include',
       });
-      
-      if (!verifyRes.ok) {
+        if (!verifyRes.ok) {
         console.warn('⚠️ Auth verification failed after login');
         
-        // For Safari, if verification fails but we have fallback, proceed anyway
-        if (isUsingSafari && localStorage.getItem('auth-safari-fallback')) {
-          console.log('🍎 Safari: Cookie verification failed, but using fallback auth');
-          // Don't throw error for Safari - rely on fallback
+        // For Safari or Chrome desktop, if verification fails but we have fallback, proceed anyway
+        if ((isUsingSafari && localStorage.getItem('auth-safari-fallback')) ||
+            (isUsingChromeDesktop && localStorage.getItem('auth-chrome-fallback'))) {
+          console.log(`🔑 ${isUsingSafari ? 'Safari' : 'Chrome Desktop'}: Cookie verification failed, but using fallback auth`);
+          // Don't throw error - rely on fallback
           return;
         }
         
         setIsAuthed(false);
         throw new Error('Authentication verification failed');
       }
+        console.log('✅ Login and auth verification successful');
       
-      console.log('✅ Login and auth verification successful');
-      
-      // If verification succeeded and we're on Safari, we can trust cookies work
+      // If verification succeeded and we're on Safari or Chrome desktop, we can trust cookies work
       if (isUsingSafari) {
         console.log('🍎 Safari: Cookie verification successful!');
+      } else if (isUsingChromeDesktop) {
+        console.log('🖥️ Chrome Desktop: Cookie verification successful!');
       }
-      
-    } catch (error) {
+        } catch (error) {
       console.error('Auth verification error:', error);
       
-      // For Safari, if verification fails but we have fallback, proceed anyway
-      if (isUsingSafari && localStorage.getItem('auth-safari-fallback')) {
-        console.log('🍎 Safari: Verification failed, but proceeding with fallback');
+      // For Safari or Chrome desktop, if verification fails but we have fallback, proceed anyway
+      if ((isUsingSafari && localStorage.getItem('auth-safari-fallback')) ||
+          (isUsingChromeDesktop && localStorage.getItem('auth-chrome-fallback'))) {
+        console.log(`🔑 ${isUsingSafari ? 'Safari' : 'Chrome Desktop'}: Verification failed, but proceeding with fallback`);
         return; // Don't throw error
       }
       
@@ -268,14 +278,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await fetch(`${API}/auth/logout`, {
       method: 'POST',
       credentials: 'include',
-    });
-    setIsAuthed(false);
+    });    setIsAuthed(false);
     
-    // Clear Safari fallback and token
+    // Clear Safari or Chrome desktop fallback and token
     if (isUsingSafari) {
       localStorage.removeItem('auth-safari-fallback');
       localStorage.removeItem('auth-token');
       console.log('🍎 Safari: Cleared fallback auth and token');
+    } else if (isUsingChromeDesktop) {
+      localStorage.removeItem('auth-chrome-fallback');
+      localStorage.removeItem('auth-token');
+      console.log('🖥️ Chrome Desktop: Cleared fallback auth and token');
     } else {
       // Clear token for all browsers as a cleanup
       localStorage.removeItem('auth-token');

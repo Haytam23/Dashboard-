@@ -23,6 +23,12 @@ const isSafari = () => {
   return /safari/.test(userAgent) && !/chrome/.test(userAgent) && !/android/.test(userAgent);
 };
 
+// Chrome desktop detection
+const isChromeDesktop = () => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  return /chrome/.test(userAgent) && !/mobile/.test(userAgent) && !/android/.test(userAgent);
+};
+
 function authHeaders() {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -30,14 +36,24 @@ function authHeaders() {
   
   // Check if we need to use Bearer token authentication
   const isUsingSafari = isiOSSafari() || isSafari();
+  const isUsingChromeDesktop = isChromeDesktop();
   const hasSafariFallback = localStorage.getItem('auth-safari-fallback');
   const storedToken = localStorage.getItem('auth-token');
   
   // Use Bearer token if:
   // 1. Safari with fallback enabled, OR
-  // 2. Any browser with a stored token (for network resilience)
-  if (storedToken && (isUsingSafari && hasSafariFallback)) {
-    console.log('🔑 Using Bearer token for API authentication');
+  // 2. Chrome desktop (cookies often blocked), OR
+  // 3. Any browser with a stored token (for network resilience)
+  if (storedToken && (
+    (isUsingSafari && hasSafariFallback) || 
+    isUsingChromeDesktop ||
+    (!isUsingSafari && !isUsingChromeDesktop) // Fallback for other browsers
+  )) {
+    console.log('🔑 Using Bearer token for API authentication', {
+      browser: isUsingSafari ? 'Safari' : isUsingChromeDesktop ? 'Chrome Desktop' : 'Other',
+      hasFallback: hasSafariFallback,
+      hasToken: !!storedToken
+    });
     headers['Authorization'] = `Bearer ${storedToken}`;
   }
   
@@ -46,17 +62,23 @@ function authHeaders() {
 
 async function handleResponse(res: Response) {
   if (res.status === 401) {
-    // Check if we're on Safari with fallback auth
+    // Check if we're on Safari or Chrome desktop with fallback auth
     const isUsingSafari = isiOSSafari() || isSafari();
+    const isUsingChromeDesktop = isChromeDesktop();
     const hasSafariFallback = localStorage.getItem('auth-safari-fallback');
+    const hasChromeFallback = localStorage.getItem('auth-chrome-fallback');
     const storedToken = localStorage.getItem('auth-token');
     
-    if (isUsingSafari && hasSafariFallback && storedToken) {
-      console.log('🍎 Safari: API call got 401 - token may be expired');
+    if (storedToken && ((isUsingSafari && hasSafariFallback) || (isUsingChromeDesktop && hasChromeFallback))) {
+      console.log(`🔑 ${isUsingSafari ? 'Safari' : 'Chrome Desktop'}: API call got 401 - token may be expired`);
       // Clear invalid token and fallback
-      localStorage.removeItem('auth-safari-fallback');
+      if (isUsingSafari) {
+        localStorage.removeItem('auth-safari-fallback');
+      } else {
+        localStorage.removeItem('auth-chrome-fallback');
+      }
       localStorage.removeItem('auth-token');
-      console.log('🍎 Safari: Cleared invalid token, redirecting to login');
+      console.log(`🔑 ${isUsingSafari ? 'Safari' : 'Chrome Desktop'}: Cleared invalid token, redirecting to login`);
     }
     
     // For all cases of 401, redirect to login
