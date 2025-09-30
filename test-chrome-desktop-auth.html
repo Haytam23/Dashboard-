@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome Desktop Authentication Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #fff; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #444; border-radius: 8px; }
+        .success { border-color: #22c55e; background: #1a472a; }
+        .error { border-color: #ef4444; background: #7f1d1d; }
+        .info { border-color: #3b82f6; background: #1e3a8a; }
+        .warning { border-color: #f59e0b; background: #92400e; }
+        button { padding: 10px 20px; margin: 5px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #1d4ed8; }
+        pre { background: #374151; padding: 10px; border-radius: 4px; max-height: 300px; overflow-y: auto; }
+        .highlight { background: #fbbf24; color: #000; padding: 2px 4px; border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <h1>🖥️ Chrome Desktop Authentication Fix Test</h1>
+    <p>Testing the new Chrome desktop Bearer token authentication fix</p>
+    
+    <div class="step info">
+        <h3>✅ What the fix does:</h3>
+        <ul>
+            <li>Detects Chrome desktop and uses <span class="highlight">Bearer token</span> authentication</li>
+            <li>Stores auth token in localStorage as fallback</li>
+            <li>Falls back to Bearer token when cookies are blocked</li>
+            <li>Works with existing Safari fallback system</li>
+        </ul>
+    </div>
+
+    <div class="step">
+        <h3>🔍 Browser Detection:</h3>
+        <div id="browserInfo"></div>
+    </div>
+
+    <div class="step">
+        <h3>🧪 Authentication Test:</h3>
+        <button onclick="testLogin()">Test Login</button>
+        <button onclick="testApiCall()">Test API Call</button>
+        <button onclick="testLogout()">Test Logout</button>
+        <div id="testStatus"></div>
+    </div>
+
+    <div class="step">
+        <h3>📊 Test Results:</h3>
+        <pre id="results"></pre>
+    </div>
+
+    <script>
+        const API_URL = 'https://dashboard-backend-nine-phi.vercel.app';
+
+        // Browser detection functions (matching frontend)
+        const isiOSSafari = () => {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent);
+        };
+
+        const isSafari = () => {
+            const userAgent = navigator.userAgent.toLowerCase();
+            return /safari/.test(userAgent) && !/chrome/.test(userAgent) && !/android/.test(userAgent);
+        };
+
+        const isChromeDesktop = () => {
+            const userAgent = navigator.userAgent.toLowerCase();
+            return /chrome/.test(userAgent) && !/mobile/.test(userAgent) && !/android/.test(userAgent);
+        };
+
+        const isAndroidChrome = () => {
+            const userAgent = navigator.userAgent.toLowerCase();
+            return /android/.test(userAgent) && /chrome/.test(userAgent);
+        };
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const resultsDiv = document.getElementById('results');
+            const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            resultsDiv.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('testStatus');
+            statusDiv.className = `step ${type}`;
+            statusDiv.innerHTML = `<h4>${message}</h4>`;
+        }
+
+        function getAuthHeaders() {
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            
+            const isUsingSafari = isiOSSafari() || isSafari();
+            const isUsingChromeDesktop = isChromeDesktop();
+            const hasSafariFallback = localStorage.getItem('auth-safari-fallback');
+            const hasChromeFallback = localStorage.getItem('auth-chrome-fallback');
+            const storedToken = localStorage.getItem('auth-token');
+            
+            // Use Bearer token if we have stored token and appropriate fallback
+            if (storedToken && (
+                (isUsingSafari && hasSafariFallback) || 
+                (isUsingChromeDesktop && hasChromeFallback) ||
+                (!isUsingSafari && !isUsingChromeDesktop)
+            )) {
+                headers['Authorization'] = `Bearer ${storedToken}`;
+                log(`Using Bearer token for ${isUsingSafari ? 'Safari' : isUsingChromeDesktop ? 'Chrome Desktop' : 'Other'} browser`);
+            }
+            
+            return headers;
+        }
+
+        // Initialize browser info
+        window.onload = () => {
+            const browserInfo = document.getElementById('browserInfo');
+            const userAgent = navigator.userAgent;
+            const isUsingSafari = isiOSSafari() || isSafari();
+            const isUsingChromeDesktop = isChromeDesktop();
+            const isUsingAndroidChrome = isAndroidChrome();
+            
+            browserInfo.innerHTML = `
+                <strong>User Agent:</strong> ${userAgent}<br>
+                <strong>Safari:</strong> ${isUsingSafari ? '✅ Yes' : '❌ No'}<br>
+                <strong>Chrome Desktop:</strong> ${isUsingChromeDesktop ? '✅ Yes' : '❌ No'}<br>
+                <strong>Android Chrome:</strong> ${isUsingAndroidChrome ? '✅ Yes' : '❌ No'}<br>
+                <strong>Auth Strategy:</strong> ${isUsingChromeDesktop ? 'Bearer Token (Chrome Desktop)' : isUsingSafari ? 'Bearer Token (Safari)' : 'Cookies + Bearer Fallback'}
+            `;
+
+            log('Chrome Desktop Authentication Test Ready');
+            log(`Browser detected: ${isUsingChromeDesktop ? 'Chrome Desktop' : isUsingSafari ? 'Safari' : 'Other'}`);
+        };
+
+        async function testLogin() {
+            try {
+                updateStatus('Testing login...', 'info');
+                log('🔐 Testing login with Chrome desktop fix...');
+                
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'admin@dashboard.com',
+                        password: 'H2@@3/**/'
+                    }),
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Login failed: ${response.status}`);
+                }
+                
+                const responseBody = await response.json();
+                log('Login response received', 'success');
+                
+                // Store token for Chrome desktop or Safari
+                if (responseBody.token) {
+                    localStorage.setItem('auth-token', responseBody.token);
+                    log('Token stored in localStorage', 'success');
+                    
+                    // Set appropriate fallback based on browser
+                    if (isChromeDesktop()) {
+                        localStorage.setItem('auth-chrome-fallback', 'true');
+                        log('Chrome Desktop fallback set', 'success');
+                    } else if (isiOSSafari() || isSafari()) {
+                        localStorage.setItem('auth-safari-fallback', 'true');
+                        log('Safari fallback set', 'success');
+                    }
+                } else {
+                    log('No token in response', 'warning');
+                }
+                
+                updateStatus('Login successful ✅', 'success');
+                
+            } catch (error) {
+                log(`Login failed: ${error.message}`, 'error');
+                updateStatus('Login failed ❌', 'error');
+            }
+        }
+
+        async function testApiCall() {
+            try {
+                updateStatus('Testing API call...', 'info');
+                log('🔍 Testing API call with Bearer token...');
+                
+                const headers = getAuthHeaders();
+                log(`Request headers: ${JSON.stringify(headers)}`);
+                
+                const response = await fetch(`${API_URL}/projects`, {
+                    headers: headers,
+                    credentials: 'include',
+                });
+                
+                log(`API response status: ${response.status}`);
+                
+                if (!response.ok) {
+                    throw new Error(`API call failed: ${response.status}`);
+                }
+                
+                const projects = await response.json();
+                log(`API call successful! Received ${projects.length} projects`, 'success');
+                updateStatus('API call successful ✅', 'success');
+                
+            } catch (error) {
+                log(`API call failed: ${error.message}`, 'error');
+                updateStatus('API call failed ❌', 'error');
+            }
+        }
+
+        async function testLogout() {
+            try {
+                updateStatus('Testing logout...', 'info');
+                log('🚪 Testing logout...');
+                
+                const response = await fetch(`${API_URL}/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include',
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Logout failed: ${response.status}`);
+                }
+                
+                // Clear stored tokens and fallbacks
+                localStorage.removeItem('auth-token');
+                localStorage.removeItem('auth-safari-fallback');
+                localStorage.removeItem('auth-chrome-fallback');
+                
+                log('Logout successful, tokens cleared', 'success');
+                updateStatus('Logout successful ✅', 'success');
+                
+            } catch (error) {
+                log(`Logout failed: ${error.message}`, 'error');
+                updateStatus('Logout failed ❌', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
